@@ -124,7 +124,7 @@ Thumbs.db
    */
   async getLog(maxCount: number = 10): Promise<any[]> {
     const log = await this.git.log({ maxCount });
-    return log.all;
+    return [...log.all];
   }
 
   /**
