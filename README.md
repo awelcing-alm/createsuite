@@ -4,6 +4,21 @@
 
 CreateSuite enables coordinated multi-agent workflows using OpenCode terminals, with persistent work state tracked in git. Inspired by [Gastown](https://github.com/steveyegge/gastown), CreateSuite provides first-class agent citizens capable of powerful autonomous work.
 
+## 🎥 Video Tour
+
+Experience CreateSuite in action! Watch our interactive tour to see how easy it is to orchestrate multi-agent workflows.
+
+```bash
+# View the landing page with video tour
+cs tour
+
+# Build the tour video (requires @remotion packages)
+cs video
+
+# Preview the video in Remotion studio
+cs video --preview
+```
+
 ## Features
 
 - 🤖 **First-Class Agents**: Autonomous agents running in dedicated OpenCode terminals
@@ -144,6 +159,14 @@ BLOCKED (if issues arise)
 ```bash
 cs init [options]              # Initialize workspace
 cs status                      # Show workspace status
+cs tour                        # Open the video tour and landing page
+```
+
+### Video Tour
+
+```bash
+cs video                       # Build the CreateSuite tour video
+cs video --preview             # Preview video in Remotion studio
 ```
 
 ### Task Management

@@ -4,6 +4,8 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import * as path from 'path';
 import * as fs from 'fs';
+import { exec, spawn } from 'child_process';
+import { promisify } from 'util';
 import { ConfigManager } from './config';
 import { TaskManager } from './taskManager';
 import { AgentOrchestrator } from './agentOrchestrator';
@@ -11,6 +13,8 @@ import { ConvoyManager } from './convoyManager';
 import { GitIntegration } from './gitIntegration';
 import { OAuthManager } from './oauthManager';
 import { TaskStatus, TaskPriority, ConvoyStatus, AgentStatus } from './types';
+
+const execAsync = promisify(exec);
 
 const program = new Command();
 
@@ -387,6 +391,101 @@ program
     } catch (error) {
       console.log(chalk.red('Error: Workspace not initialized'));
       console.log(chalk.gray('Run: cs init'));
+    }
+  });
+
+// Tour command
+program
+  .command('tour')
+  .description('Open the CreateSuite tour and landing page')
+  .action(async () => {
+    const landingPagePath = path.join(__dirname, '..', 'public', 'index.html');
+    
+    if (!fs.existsSync(landingPagePath)) {
+      console.log(chalk.red('Landing page not found.'));
+      console.log(chalk.yellow('Please run: npm run video:build'));
+      return;
+    }
+    
+    console.log(chalk.blue('Opening CreateSuite tour...'));
+    console.log(chalk.gray(`Location: ${landingPagePath}`));
+    
+    // Open the landing page in the default browser using spawn for safety
+    const open = async (filePath: string) => {
+      let command: string;
+      let args: string[];
+      
+      if (process.platform === 'darwin') {
+        command = 'open';
+        args = [filePath];
+      } else if (process.platform === 'win32') {
+        command = 'cmd';
+        args = ['/c', 'start', '""', filePath];
+      } else {
+        command = 'xdg-open';
+        args = [filePath];
+      }
+      
+      return new Promise<void>((resolve, reject) => {
+        const child = spawn(command, args, {
+          detached: true,
+          stdio: 'ignore'
+        });
+        
+        child.on('error', (error) => {
+          reject(error);
+        });
+        
+        child.unref();
+        resolve();
+      });
+    };
+    
+    try {
+      await open(landingPagePath);
+      console.log(chalk.green('✓ Landing page opened in browser'));
+    } catch (error) {
+      console.log(chalk.red('Error opening browser:'), (error as Error).message);
+    }
+  });
+
+// Video command
+program
+  .command('video')
+  .description('Build the CreateSuite tour video')
+  .option('--preview', 'Preview the video in Remotion studio')
+  .action(async (options) => {
+    if (options.preview) {
+      console.log(chalk.blue('Opening Remotion preview...'));
+      console.log(chalk.gray('This will open the Remotion studio in your browser.'));
+      
+      exec('npm run remotion:preview', (error: any, stdout: any, stderr: any) => {
+        if (error) {
+          console.log(chalk.red(`Error: ${error.message}`));
+          return;
+        }
+        if (stderr) {
+          console.log(chalk.yellow(stderr));
+        }
+        console.log(stdout);
+      });
+    } else {
+      console.log(chalk.blue('Building CreateSuite tour video...'));
+      console.log(chalk.gray('This may take a few minutes...'));
+      
+      try {
+        const { stdout, stderr } = await execAsync('npm run video:build');
+        if (stderr) {
+          console.log(chalk.yellow(stderr));
+        }
+        console.log(stdout);
+        console.log(chalk.green('✓ Video built successfully!'));
+        console.log(chalk.gray('Location: public/tour.mp4'));
+        console.log(chalk.gray('\nRun "cs tour" to view the landing page with the video.'));
+      } catch (error: any) {
+        console.log(chalk.red('Error building video:'));
+        console.log(chalk.red(error.message));
+      }
     }
   });
 
