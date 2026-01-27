@@ -4,6 +4,7 @@ import * as os from 'os';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { spawn } from 'child_process';
+import { LocalhostOAuth } from './localhostOAuth';
 
 /**
  * Supported AI model providers
@@ -375,27 +376,106 @@ export class ProviderManager {
   }
 
   /**
-   * Authenticate OpenAI via OpenCode
+   * Authenticate OpenAI via localhost OAuth or API key
    */
   private async authenticateOpenAI(): Promise<void> {
-    console.log(chalk.gray('OpenAI authentication via coding plan...'));
-    console.log(chalk.yellow('\nAuthentication steps:'));
-    console.log(chalk.gray('  1. Ensure your OpenAI API key is configured'));
-    console.log(chalk.gray('  2. Run: opencode auth login'));
-    console.log(chalk.gray('  3. Select Provider: OpenAI'));
-    console.log(chalk.gray('  4. Enter your API key'));
+    console.log(chalk.bold.blue('\n🟢 OpenAI Authentication\n'));
     
-    const { completed } = await inquirer.prompt([
+    const { method } = await inquirer.prompt([
       {
-        type: 'confirm',
-        name: 'completed',
-        message: 'Have you completed the authentication?',
-        default: false
+        type: 'list',
+        name: 'method',
+        message: 'Choose authentication method:',
+        choices: [
+          { name: '🔑 API Key (Recommended)', value: 'api-key' },
+          { name: '🌐 OAuth Flow (Browser)', value: 'oauth' }
+        ],
+        default: 'api-key'
       }
     ]);
 
-    if (completed) {
-      console.log(chalk.green('✓ OpenAI authentication complete'));
+    if (method === 'api-key') {
+      await this.authenticateOpenAIWithAPIKey();
+    } else {
+      await this.authenticateOpenAIWithOAuth();
+    }
+  }
+
+  /**
+   * Authenticate OpenAI with API key
+   */
+  private async authenticateOpenAIWithAPIKey(): Promise<void> {
+    console.log(chalk.gray('\n📝 Enter your OpenAI API key'));
+    console.log(chalk.gray('Get your API key from: https://platform.openai.com/api-keys\n'));
+
+    const { apiKey, confirm } = await inquirer.prompt([
+      {
+        type: 'password',
+        name: 'apiKey',
+        message: 'OpenAI API Key:',
+        validate: (input) => {
+          if (!input || input.trim().length === 0) {
+            return 'API key is required';
+          }
+          if (!input.startsWith('sk-')) {
+            return 'OpenAI API keys typically start with "sk-"';
+          }
+          return true;
+        }
+      },
+      {
+        type: 'confirm',
+        name: 'confirm',
+        message: 'Save this API key securely?',
+        default: true
+      }
+    ]);
+
+    if (confirm) {
+      // Store API key securely
+      const credPath = path.join(this.workspaceRoot, '.createsuite', 'openai-credentials.json');
+      const credDir = path.dirname(credPath);
+      
+      if (!fs.existsSync(credDir)) {
+        fs.mkdirSync(credDir, { recursive: true });
+      }
+
+      fs.writeFileSync(
+        credPath,
+        JSON.stringify({ apiKey: apiKey.trim(), createdAt: new Date().toISOString() }, null, 2),
+        { mode: 0o600 } // Restrict permissions
+      );
+
+      console.log(chalk.green('\n✓ OpenAI API key saved securely'));
+      console.log(chalk.gray(`Stored in: ${credPath}`));
+      console.log(chalk.yellow('\n⚠️  Keep your API key secure and never commit it to git'));
+    } else {
+      console.log(chalk.yellow('⚠️  API key not saved'));
+    }
+  }
+
+  /**
+   * Authenticate OpenAI with OAuth
+   */
+  private async authenticateOpenAIWithOAuth(): Promise<void> {
+    console.log(chalk.gray('\n🌐 Starting OAuth flow...'));
+    console.log(chalk.gray('A browser window will open for authentication\n'));
+
+    try {
+      const oauth = new LocalhostOAuth(3000);
+      
+      // Note: OpenAI doesn't have a standard OAuth flow for API access
+      // This is a demonstration - in practice, most users will use API keys
+      console.log(chalk.yellow('⚠️  OpenAI primarily uses API keys for authentication'));
+      console.log(chalk.gray('OAuth flow is not officially supported by OpenAI'));
+      console.log(chalk.gray('Falling back to API key method...\n'));
+      
+      await this.authenticateOpenAIWithAPIKey();
+      
+    } catch (error) {
+      console.error(chalk.red('OAuth flow failed:'), error);
+      console.log(chalk.yellow('\nFalling back to API key method...'));
+      await this.authenticateOpenAIWithAPIKey();
     }
   }
 

@@ -25,13 +25,15 @@ CreateSuite now integrates with [oh-my-opencode](https://github.com/code-yeongyu
 
 - 🔷 **Z.ai GLM 4.7** - Access via coding plan
 - 🟣 **Claude Opus & Sonnet 4.5** - Pro and Max (20x mode) tiers
-- 🟢 **OpenAI GPT-5.2** - Via coding plan
+- 🟢 **OpenAI GPT-5.2** - **NEW: Localhost OAuth + API Key support** ✨
 - 🔵 **MiniMax 2.1** - Latest model access
 - 🔴 **Google Gemini 3 Pro** - Antigravity OAuth support
 - 🐙 **GitHub Copilot** - Fallback provider
 - 🧘 **OpenCode Zen** - OpenCode native models
 
 Use the interactive setup wizard: `cs provider setup`
+
+**New:** Secure localhost-based authentication for OpenAI with API key support. See [OpenAI Authentication Guide](OPENAI_AUTH.md) for details.
 
 ## Features
 

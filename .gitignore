@@ -76,6 +76,7 @@ web_modules/
 # CreateSuite specific
 .createsuite/oauth-token.json
 .createsuite/providers.json
+.createsuite/*-credentials.json
 .createsuite/*.tmp
 
 # Remotion

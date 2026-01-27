@@ -11,5 +11,6 @@ export { ConvoyManager } from './convoyManager';
 export { GitIntegration } from './gitIntegration';
 export { OAuthManager } from './oauthManager';
 export { ProviderManager, Provider } from './providerManager';
+export { LocalhostOAuth } from './localhostOAuth';
 
 export * from './types';
