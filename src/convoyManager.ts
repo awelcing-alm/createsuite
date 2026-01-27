@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Convoy, ConvoyStatus } from './types';
+import { Convoy, ConvoyStatus, TaskStatus } from './types';
 import { ConfigManager } from './config';
 import { TaskManager } from './taskManager';
 
@@ -150,9 +150,9 @@ export class ConvoyManager {
     );
 
     const validTasks = tasks.filter(t => t !== null);
-    const completed = validTasks.filter(t => t!.status === 'completed').length;
-    const inProgress = validTasks.filter(t => t!.status === 'in_progress').length;
-    const open = validTasks.filter(t => t!.status === 'open').length;
+    const completed = validTasks.filter(t => t!.status === TaskStatus.COMPLETED).length;
+    const inProgress = validTasks.filter(t => t!.status === TaskStatus.IN_PROGRESS).length;
+    const open = validTasks.filter(t => t!.status === TaskStatus.OPEN).length;
     const total = validTasks.length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 

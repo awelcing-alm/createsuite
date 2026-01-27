@@ -92,18 +92,26 @@ export class OAuthManager {
   /**
    * Initialize OAuth flow (placeholder)
    * In production, this would open browser for OAuth flow
+   * 
+   * WARNING: This is a development placeholder. In production:
+   * - Implement proper OAuth 2.0 flow with PKCE
+   * - Use a secure callback server
+   * - Validate state parameter
+   * - Exchange authorization code for real access token
    */
   async initializeOAuth(config: OAuthConfig): Promise<void> {
-    console.log('OAuth Flow would be initiated here');
+    console.log('⚠️  DEVELOPMENT MODE: OAuth Flow Placeholder');
     console.log('Scopes:', config.scopes.join(', '));
-    console.log('In production, this would:');
+    console.log('\nIn production, this would:');
     console.log('1. Open browser to authorization URL');
     console.log('2. Handle callback with authorization code');
     console.log('3. Exchange code for access token');
     console.log('4. Store token securely');
     
-    // For now, we'll just create a placeholder token
-    await this.storeToken('placeholder_token_' + Date.now(), 3600);
+    // Development placeholder - DO NOT use in production
+    // Store a marker token to indicate OAuth was initiated
+    await this.storeToken('dev_placeholder_token', 3600);
+    console.log('\n✓ Development placeholder token stored');
   }
 
   /**

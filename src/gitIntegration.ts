@@ -63,10 +63,8 @@ Thumbs.db
    * Commit changes to task tracking data
    */
   async commitTaskChanges(message: string): Promise<void> {
-    const creatsuiteDir = path.join(this.workspaceRoot, '.createsuite');
-    
     // Add all changes in .createsuite directory
-    await this.git.add(`${creatsuiteDir}/*`);
+    await this.git.add('.createsuite/.');
     
     // Check if there are changes to commit
     const status = await this.git.status();
@@ -131,8 +129,7 @@ Thumbs.db
    * Stage all changes in .createsuite directory
    */
   async stageTaskData(): Promise<void> {
-    const creatsuiteDir = path.join(this.workspaceRoot, '.createsuite');
-    await this.git.add(`${creatsuiteDir}/*`);
+    await this.git.add('.createsuite/.');
   }
 
   /**

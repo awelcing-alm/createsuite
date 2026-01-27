@@ -140,6 +140,9 @@ export class AgentOrchestrator {
       throw new Error(`Agent not found: ${agentId}`);
     }
 
+    // Sanitize workspace root to prevent command injection
+    const sanitizedWorkspace = this.workspaceRoot.replace(/['"\\$`]/g, '\\$&');
+    
     // Create a script to install and run OpenCode
     const script = `
       #!/bin/bash
@@ -149,7 +152,7 @@ export class AgentOrchestrator {
       fi
       
       # Run OpenCode in the workspace
-      cd ${this.workspaceRoot}
+      cd "${sanitizedWorkspace}"
       opencode
     `;
 
@@ -158,15 +161,15 @@ export class AgentOrchestrator {
     console.log(`Would spawn OpenCode terminal for agent ${agent.name}`);
     console.log('Script:', script);
 
-    // Placeholder PID
-    const pid = process.pid + Math.floor(Math.random() * 1000);
+    // Placeholder PID - use null in production until actual terminal spawning is implemented
+    const pid = undefined;
     
     await this.updateAgent(agentId, {
       terminalPid: pid,
       status: AgentStatus.WORKING
     });
 
-    return pid;
+    return pid || 0;
   }
 
   /**
