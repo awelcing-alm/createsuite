@@ -1,0 +1,13 @@
+{
+  "id": "cs-5lzcb",
+  "title": "Fix Agent Launch Issue",
+  "description": "",
+  "status": "open",
+  "createdAt": "2026-01-27T21:35:11.566Z",
+  "updatedAt": "2026-01-27T21:35:11.566Z",
+  "priority": "high",
+  "tags": [
+    "agent-ui",
+    "bug"
+  ]
+}
