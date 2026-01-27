@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CreateSuite - Orchestrated Swarm System for OpenCode Agents</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #f8fafc;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+        }
+
+        .tagline {
+            font-size: 1.5rem;
+            color: #cbd5e1;
+            margin-bottom: 40px;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin: 40px auto;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+        }
+
+        .feature-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px -10px rgba(59, 130, 246, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            color: #3b82f6;
+            margin-bottom: 15px;
+        }
+
+        .feature-card p {
+            color: #cbd5e1;
+            font-size: 1rem;
+        }
+
+        .cta-section {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 20px;
+            margin: 60px 0;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: #3b82f6;
+        }
+
+        .install-command {
+            background: #0f172a;
+            border: 1px solid #3b82f6;
+            border-radius: 10px;
+            padding: 20px 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            color: #10b981;
+            display: inline-block;
+            margin-bottom: 30px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .quick-start {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 15px;
+            padding: 40px;
+            margin: 60px 0;
+        }
+
+        .quick-start h2 {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            color: #3b82f6;
+        }
+
+        .command-list {
+            list-style: none;
+        }
+
+        .command-list li {
+            background: #0f172a;
+            border-left: 4px solid #10b981;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            color: #10b981;
+        }
+
+        .command-description {
+            color: #cbd5e1;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+            border-top: 1px solid rgba(59, 130, 246, 0.2);
+            margin-top: 60px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .tagline {
+                font-size: 1.2rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CreateSuite</h1>
+            <p class="tagline">Orchestrated Swarm System for OpenCode Agents with Git-Based Task Tracking</p>
+        </header>
+
+        <div class="video-container">
+            <video controls autoplay loop muted>
+                <source src="tour.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>First-Class Agents</h3>
+                <p>Autonomous agents running in dedicated OpenCode terminals with their own identity, state, and communication channels.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📋</div>
+                <h3>Git-Based Task Tracking</h3>
+                <p>Persistent task state using git-backed storage. Every change is tracked, versioned, and auditable for complete transparency.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🚚</div>
+                <h3>Convoy Orchestration</h3>
+                <p>Organize related tasks into convoys for coordinated multi-agent workflows and real-time progress tracking.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📬</div>
+                <h3>Agent Mailboxes</h3>
+                <p>Built-in communication system for inter-agent coordination and message passing.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>OAuth Integration</h3>
+                <p>Support for coding plan authentication with secure token management.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <h3>Terminal Orchestration</h3>
+                <p>Seamlessly manage multiple OpenCode instances with automatic terminal spawning and lifecycle management.</p>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h2>Get Started in Seconds</h2>
+            <div class="install-command">
+                $ npm install createsuite
+            </div>
+            <div class="button-group">
+                <a href="https://github.com/awelcing-alm/createsuite" class="btn btn-primary">View on GitHub</a>
+                <a href="#quick-start" class="btn btn-secondary">Quick Start Guide</a>
+            </div>
+        </div>
+
+        <div class="quick-start" id="quick-start">
+            <h2>Quick Start Guide</h2>
+            <ul class="command-list">
+                <li>
+                    <div>cs init --name my-project --git</div>
+                    <div class="command-description">Initialize a new CreateSuite workspace with git tracking</div>
+                </li>
+                <li>
+                    <div>cs agent create alice --capabilities "frontend,testing"</div>
+                    <div class="command-description">Create an agent with specific capabilities</div>
+                </li>
+                <li>
+                    <div>cs task create --title "Build feature" --priority high</div>
+                    <div class="command-description">Create a new task with priority level</div>
+                </li>
+                <li>
+                    <div>cs agent assign cs-abc12 alice</div>
+                    <div class="command-description">Assign a task to an agent for execution</div>
+                </li>
+                <li>
+                    <div>cs convoy create "Feature X" --tasks cs-abc12,cs-def34</div>
+                    <div class="command-description">Group related tasks into a convoy</div>
+                </li>
+                <li>
+                    <div>cs status</div>
+                    <div class="command-description">View workspace status and statistics</div>
+                </li>
+            </ul>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 CreateSuite. Licensed under MIT. Inspired by Gastown.</p>
+            <p>Built with ❤️ for the OpenCode community</p>
+        </footer>
+    </div>
+</body>
+</html>

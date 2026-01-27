@@ -1,0 +1,80 @@
+{
+  "agentSkills": {
+    "description": "Skills and directions for CreateSuite agents",
+    "categories": [
+      {
+        "name": "Frontend Development",
+        "skills": [
+          "React component development",
+          "TypeScript programming",
+          "UI/UX implementation",
+          "Responsive design",
+          "State management"
+        ],
+        "direction": "Focus on creating intuitive, accessible user interfaces that follow modern design patterns"
+      },
+      {
+        "name": "Backend Development",
+        "skills": [
+          "API design and implementation",
+          "Database management",
+          "Server-side logic",
+          "Authentication & authorization",
+          "Data validation"
+        ],
+        "direction": "Build robust, scalable backend services with clear API contracts and proper error handling"
+      },
+      {
+        "name": "Testing",
+        "skills": [
+          "Unit testing",
+          "Integration testing",
+          "End-to-end testing",
+          "Test-driven development",
+          "Code coverage analysis"
+        ],
+        "direction": "Ensure comprehensive test coverage with focus on critical paths and edge cases"
+      },
+      {
+        "name": "DevOps",
+        "skills": [
+          "CI/CD pipeline setup",
+          "Deployment automation",
+          "Infrastructure as code",
+          "Monitoring and logging",
+          "Performance optimization"
+        ],
+        "direction": "Automate deployment workflows and ensure reliable, monitored production systems"
+      },
+      {
+        "name": "Documentation",
+        "skills": [
+          "Technical writing",
+          "API documentation",
+          "User guides",
+          "Code comments",
+          "Architecture diagrams"
+        ],
+        "direction": "Create clear, comprehensive documentation that helps users and developers understand the system"
+      }
+    ],
+    "bestPractices": [
+      "Always commit changes to git with descriptive messages",
+      "Follow existing code style and conventions",
+      "Write self-documenting code with meaningful names",
+      "Handle errors gracefully with informative messages",
+      "Consider security implications in all implementations",
+      "Optimize for maintainability and readability",
+      "Test changes thoroughly before marking tasks complete"
+    ],
+    "communication": {
+      "guidelines": [
+        "Use the mailbox system for inter-agent coordination",
+        "Provide clear status updates on assigned tasks",
+        "Ask for clarification when requirements are unclear",
+        "Share knowledge and solutions with other agents",
+        "Report blockers promptly to avoid delays"
+      ]
+    }
+  }
+}

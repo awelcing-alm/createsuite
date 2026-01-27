@@ -390,4 +390,76 @@ program
     }
   });
 
+// Tour command
+program
+  .command('tour')
+  .description('Open the CreateSuite tour and landing page')
+  .action(async () => {
+    const landingPagePath = path.join(__dirname, '..', 'public', 'index.html');
+    
+    if (!fs.existsSync(landingPagePath)) {
+      console.log(chalk.red('Landing page not found.'));
+      console.log(chalk.yellow('Please run: npm run video:build'));
+      return;
+    }
+    
+    console.log(chalk.blue('Opening CreateSuite tour...'));
+    console.log(chalk.gray(`Location: ${landingPagePath}`));
+    
+    // Open the landing page in the default browser
+    const open = async (url: string) => {
+      const { exec } = require('child_process');
+      const command = process.platform === 'darwin' ? 'open' : 
+                     process.platform === 'win32' ? 'start' : 'xdg-open';
+      exec(`${command} ${url}`);
+    };
+    
+    await open(landingPagePath);
+    console.log(chalk.green('✓ Landing page opened in browser'));
+  });
+
+// Video command
+program
+  .command('video')
+  .description('Build the CreateSuite tour video')
+  .option('--preview', 'Preview the video in Remotion studio')
+  .action(async (options) => {
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+    
+    if (options.preview) {
+      console.log(chalk.blue('Opening Remotion preview...'));
+      console.log(chalk.gray('This will open the Remotion studio in your browser.'));
+      
+      exec('npm run remotion:preview', (error: any, stdout: any, stderr: any) => {
+        if (error) {
+          console.log(chalk.red(`Error: ${error.message}`));
+          return;
+        }
+        if (stderr) {
+          console.log(chalk.yellow(stderr));
+        }
+        console.log(stdout);
+      });
+    } else {
+      console.log(chalk.blue('Building CreateSuite tour video...'));
+      console.log(chalk.gray('This may take a few minutes...'));
+      
+      try {
+        const { stdout, stderr } = await execAsync('npm run video:build');
+        if (stderr) {
+          console.log(chalk.yellow(stderr));
+        }
+        console.log(stdout);
+        console.log(chalk.green('✓ Video built successfully!'));
+        console.log(chalk.gray('Location: public/tour.mp4'));
+        console.log(chalk.gray('\nRun "cs tour" to view the landing page with the video.'));
+      } catch (error: any) {
+        console.log(chalk.red('Error building video:'));
+        console.log(chalk.red(error.message));
+      }
+    }
+  });
+
 program.parse();
