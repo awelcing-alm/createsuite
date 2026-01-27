@@ -4,7 +4,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import * as path from 'path';
 import * as fs from 'fs';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import { ConfigManager } from './config';
 import { TaskManager } from './taskManager';
@@ -410,23 +410,43 @@ program
     console.log(chalk.blue('Opening CreateSuite tour...'));
     console.log(chalk.gray(`Location: ${landingPagePath}`));
     
-    // Open the landing page in the default browser
+    // Open the landing page in the default browser using spawn for safety
     const open = async (filePath: string) => {
-      // Escape the file path to prevent command injection
-      const escapedPath = filePath.replace(/"/g, '\\"');
-      const command = process.platform === 'darwin' ? `open "${escapedPath}"` : 
-                     process.platform === 'win32' ? `start "" "${escapedPath}"` : 
-                     `xdg-open "${escapedPath}"`;
+      let command: string;
+      let args: string[];
       
-      try {
-        await execAsync(command);
-      } catch (error) {
-        console.log(chalk.red('Error opening browser:'), (error as Error).message);
+      if (process.platform === 'darwin') {
+        command = 'open';
+        args = [filePath];
+      } else if (process.platform === 'win32') {
+        command = 'cmd';
+        args = ['/c', 'start', '""', filePath];
+      } else {
+        command = 'xdg-open';
+        args = [filePath];
       }
+      
+      return new Promise<void>((resolve, reject) => {
+        const child = spawn(command, args, {
+          detached: true,
+          stdio: 'ignore'
+        });
+        
+        child.on('error', (error) => {
+          reject(error);
+        });
+        
+        child.unref();
+        resolve();
+      });
     };
     
-    await open(landingPagePath);
-    console.log(chalk.green('✓ Landing page opened in browser'));
+    try {
+      await open(landingPagePath);
+      console.log(chalk.green('✓ Landing page opened in browser'));
+    } catch (error) {
+      console.log(chalk.red('Error opening browser:'), (error as Error).message);
+    }
   });
 
 // Video command
