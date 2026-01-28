@@ -30,6 +30,7 @@ CreateSuite now integrates with [oh-my-opencode](https://github.com/code-yeongyu
 - 🔴 **Google Gemini 3 Pro** - Antigravity OAuth support
 - 🐙 **GitHub Copilot** - Fallback provider
 - 🧘 **OpenCode Zen** - OpenCode native models
+- 🤗 **Hugging Face Inference** - **NEW: Image & Asset Generation** ✨
 
 Use the interactive setup wizard: `cs provider setup`
 

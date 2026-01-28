@@ -58,6 +58,7 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
   const socketRef = useRef<Socket | null>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const nodeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Initialize Socket - use relative path for production compatibility
@@ -131,11 +132,12 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
 
   return (
     <Draggable
+      nodeRef={nodeRef}
       handle=".window-header"
       defaultPosition={initialPosition}
       onMouseDown={() => onFocus(id)}
     >
-      <div style={{ position: 'absolute', zIndex }}>
+      <div ref={nodeRef} style={{ position: 'absolute', zIndex }}>
         <StyledWindow className='window'>
           <WindowHeader className='window-header' style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ marginLeft: 4 }}>{title}</span>

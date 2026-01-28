@@ -60,38 +60,66 @@ const App: React.FC = () => {
   const [agentsMenuOpen, setAgentsMenuOpen] = useState(false);
   const [topZIndex, setTopZIndex] = useState(1);
 
-  const spawnTerminal = (title: string = 'OpenCode Terminal', command?: string) => {
+  const spawnTerminal = (title: string = 'OpenCode Terminal', command?: string, customPosition?: { x: number, y: number }) => {
     const id = Math.random().toString(36).substr(2, 9);
-    const newZ = topZIndex + 1;
-    setTopZIndex(newZ);
     
-    // Offset slightly for cascading effect
-    const offset = terminals.length * 20;
-    const position = { 
-      x: 50 + (offset % 300), 
-      y: 50 + (offset % 300) 
-    };
+    setTerminals(prev => {
+      const maxZ = prev.reduce((max, t) => Math.max(max, t.zIndex), topZIndex);
+      const newZ = maxZ + 1;
+      setTopZIndex(newZ); // Keep state in sync eventually
+      
+      let position;
+      if (customPosition) {
+        position = customPosition;
+      } else {
+        const offset = prev.length * 20;
+        position = { 
+          x: 50 + (offset % 300), 
+          y: 50 + (offset % 300) 
+        };
+      }
 
-    setTerminals([...terminals, {
-      id,
-      title: `${title} - ${id.substr(0, 4)}`,
-      zIndex: newZ,
-      position,
-      initialCommand: command
-    }]);
+      return [...prev, {
+        id,
+        title: `${title} - ${id.substr(0, 4)}`,
+        zIndex: newZ,
+        position,
+        initialCommand: command
+      }];
+    });
     setStartMenuOpen(false);
     setAgentsMenuOpen(false);
   };
 
   const closeTerminal = (id: string) => {
-    setTerminals(terminals.filter(t => t.id !== id));
+    setTerminals(prev => prev.filter(t => t.id !== id));
   };
 
   const focusTerminal = (id: string) => {
     const newZ = topZIndex + 1;
     setTopZIndex(newZ);
-    setTerminals(terminals.map(t => t.id === id ? { ...t, zIndex: newZ } : t));
+    setTerminals(prev => prev.map(t => t.id === id ? { ...t, zIndex: newZ } : t));
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('demo') === 'true') {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      
+      // Top Left
+      spawnTerminal('Z.ai Agent (GLM 4.7)', 'export OPENCODE_PROVIDER=zai-coding-plan OPENCODE_MODEL=glm-4.7; echo "Starting Z.ai GLM 4.7 Agent..."; opencode', { x: 20, y: 20 });
+      
+      // Top Right
+      setTimeout(() => spawnTerminal('Asset Generator (HF)', 'export OPENCODE_PROVIDER=huggingface OPENCODE_MODEL=stable-diffusion-3.5-large; echo "Starting Asset Generator (Hugging Face)..."; opencode', { x: w - 620, y: 20 }), 200);
+      
+      // Bottom Left
+      setTimeout(() => spawnTerminal('Sisyphus (Claude)', 'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; echo "Starting Sisyphus (Claude)..."; opencode', { x: 20, y: h - 480 }), 400);
+      
+      // Bottom Right
+      setTimeout(() => spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle (OpenAI)..."; opencode', { x: w - 620, y: h - 480 }), 600);
+    }
+  }, []);
 
   return (
     <ThemeProvider theme={original}>
@@ -149,7 +177,7 @@ const App: React.FC = () => {
                             zIndex: 10002
                           }}
                         >
-                          <MenuListItem onClick={() => spawnTerminal('Z.ai Agent (GLM 4.7)', 'export OPENCODE_PROVIDER=zai OPENCODE_MODEL=glm-4.7; echo "Starting Z.ai GLM 4.7 Agent..."; opencode')}>
+                          <MenuListItem onClick={() => spawnTerminal('Z.ai Agent (GLM 4.7)', 'export OPENCODE_PROVIDER=zai-coding-plan OPENCODE_MODEL=glm-4.7; echo "Starting Z.ai GLM 4.7 Agent..."; opencode')}>
                             <img
                               src="https://win98icons.alexmeub.com/icons/png/network_internet_pcs_installer-0.png"
                               alt="zai"
@@ -157,10 +185,59 @@ const App: React.FC = () => {
                             />
                             Z.ai GLM 4.7
                           </MenuListItem>
+                          <MenuListItem onClick={() => spawnTerminal('Asset Generator (HF)', 'export OPENCODE_PROVIDER=huggingface OPENCODE_MODEL=stable-diffusion-3.5-large; echo "Starting Asset Generator (Hugging Face)..."; opencode')}>
+                            <img
+                              src="https://win98icons.alexmeub.com/icons/png/paint_file-2.png"
+                              alt="hf"
+                              style={{ height: '16px', marginRight: 8 }}
+                            />
+                            Asset Generator
+                          </MenuListItem>
+                          <MenuListItem onClick={() => spawnTerminal('Sisyphus (Claude)', 'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; echo "Starting Sisyphus (Claude)..."; opencode')}>
+                            <img
+                              src="https://win98icons.alexmeub.com/icons/png/msg_information-0.png"
+                              alt="claude"
+                              style={{ height: '16px', marginRight: 8 }}
+                            />
+                            Sisyphus (Claude)
+                          </MenuListItem>
+                          <MenuListItem onClick={() => spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle (OpenAI)..."; opencode')}>
+                            <img
+                              src="https://win98icons.alexmeub.com/icons/png/help_book_big-0.png"
+                              alt="openai"
+                              style={{ height: '16px', marginRight: 8 }}
+                            />
+                            Oracle (OpenAI)
+                          </MenuListItem>
                         </MenuList>
                       )}
                     </MenuListItem>
                     <Separator />
+                    <MenuListItem onClick={() => {
+                      const w = window.innerWidth;
+                      const h = window.innerHeight;
+                      
+                      // Top Left
+                      spawnTerminal('Z.ai Agent (GLM 4.7)', 'export OPENCODE_PROVIDER=zai-coding-plan OPENCODE_MODEL=glm-4.7; echo "Starting Z.ai GLM 4.7 Agent..."; opencode', { x: 20, y: 20 });
+                      
+                      // Top Right
+                      setTimeout(() => spawnTerminal('Asset Generator (HF)', 'export OPENCODE_PROVIDER=huggingface OPENCODE_MODEL=stable-diffusion-3.5-large; echo "Starting Asset Generator (Hugging Face)..."; opencode', { x: w - 620, y: 20 }), 200);
+                      
+                      // Bottom Left
+                      setTimeout(() => spawnTerminal('Sisyphus (Claude)', 'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; echo "Starting Sisyphus (Claude)..."; opencode', { x: 20, y: h - 480 }), 400);
+                      
+                      // Bottom Right
+                      setTimeout(() => spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle (OpenAI)..."; opencode', { x: w - 620, y: h - 480 }), 600);
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <img
+                          src="https://win98icons.alexmeub.com/icons/png/briefcase-2.png"
+                          alt="test"
+                          style={{ height: '16px', marginRight: 8 }}
+                        />
+                        Convoy Delivery Test
+                      </div>
+                    </MenuListItem>
                     <MenuListItem onClick={() => spawnTerminal()}>
                       <TerminalIcon size={16} style={{ marginRight: 8 }} />
                       New Terminal

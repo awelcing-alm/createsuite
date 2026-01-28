@@ -31,7 +31,7 @@ This document describes how CreateSuite leverages oh-my-opencode to provide worl
 │  • Z.ai GLM      │      │  • GitHub Copilot│
 │  • Claude        │      │  • OpenCode Zen  │
 │  • OpenAI        │      │  • Gemini        │
-│  • MiniMax       │      │                  │
+│  • MiniMax       │      │  • Hugging Face  │
 └──────────────────┘      └──────────────────┘
 ```
 
@@ -97,6 +97,11 @@ This document describes how CreateSuite leverages oh-my-opencode to provide worl
 - **Model**: Gemini 3 Flash
 - **Role**: Visual analysis
 - **Use case**: Screenshot and image understanding
+
+#### Asset Generator
+- **Model**: Stable Diffusion 3.5 Large
+- **Role**: Visual asset creation
+- **Use case**: Generating icons, backgrounds, and UI assets via Hugging Face Inference
 
 ### 2. Advanced Features
 
@@ -312,6 +317,7 @@ cs convoy create "Documentation" --tasks cs-doc01,cs-doc02,cs-doc03
 - Librarian: GLM 4.7 or Sonnet 4.5
 - Explore: Fast models (Grok Code)
 - Frontend: Gemini 3 Pro
+- Assets: Stable Diffusion 3.5 Large (Hugging Face)
 
 ## Troubleshooting
 

@@ -52,6 +52,11 @@ CreateSuite supports the following AI model providers via coding plans:
 - **Priority**: Used when Copilot and native providers unavailable
 - **Setup**: Automatic if you have access
 
+### 🤗 Hugging Face Inference
+- **Models**: huggingface/stable-diffusion-3.5-large
+- **Best for**: Image and asset generation
+- **Setup**: Via Hugging Face API token and OpenCode auth login
+
 ## Quick Start
 
 ### 1. Install CreateSuite
@@ -253,6 +258,7 @@ oh-my-opencode assigns models based on provider priority:
 | Explore (Search) | Grok Code | OpenCode Zen (if available) |
 | Frontend Engineer | Gemini 3 Pro | Google |
 | Multimodal Looker | Gemini 3 Flash | Google |
+| Asset Generator | Stable Diffusion 3.5 Large | Hugging Face |
 
 ### Fallback to GitHub Copilot
 

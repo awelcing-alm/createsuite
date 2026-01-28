@@ -142,13 +142,20 @@ const TitleScene: React.FC = () => {
 
 const AgentsScene: React.FC = () => {
   return (
-    <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', overflow: 'hidden'}}>
-      <SassyBackground primaryColor={COLORS.neonGreen} secondaryColor={COLORS.void} />
-      <div style={{zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-         <div style={{fontSize: 200, marginBottom: 20}}>🤖</div>
+    <AbsoluteFill>
+      <AgentUIScene />
+      <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', zIndex: 10, pointerEvents: 'none'}}>
         <BigText color={COLORS.neonGreen}>ACTUAL<br/>WORKERS</BigText>
-        <SubText delay={15}>Unlike your last intern, these agents handle their own state.</SubText>
-      </div>
+        <div style={{
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            padding: '10px 40px',
+            borderRadius: 50,
+            marginTop: 40,
+            display: 'inline-block'
+        }}>
+            <SubText delay={15}>Unlike your last intern, they have their own desktop.</SubText>
+        </div>
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };
@@ -166,25 +173,180 @@ const GitScene: React.FC = () => {
   );
 };
 
-const ConvoyScene: React.FC = () => {
-    const frame = useCurrentFrame();
-    const rotate = frame * 2;
+// --- TERMINAL COMPONENT ---
+
+const TerminalBox: React.FC<{
+  title: string;
+  color: string;
+  lines: string[];
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  delay?: number;
+}> = ({title, color, lines, x, y, width = 600, height = 400, delay = 0}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  
+  // Pop in effect
+  const scale = spring({
+    frame: frame - delay,
+    fps,
+    config: {damping: 15, stiffness: 120}
+  });
+
   return (
-    <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', overflow: 'hidden'}}>
-      <SassyBackground primaryColor={COLORS.pureWhite} secondaryColor={COLORS.void} />
-       <div style={{
-           position: 'absolute', 
-           width: 1000, 
-           height: 1000, 
-           border: `20px solid ${COLORS.hotPink}`, 
-           borderRadius: '50%',
-           transform: `rotate(${rotate}deg)`,
-           opacity: 0.2
-       }} />
-      <div style={{zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-        <BigText color={COLORS.hotPink}>CONVOYS</BigText>
-        <SubText delay={15}>Squad goals for your codebase.</SubText>
+    <div
+      style={{
+        position: 'absolute',
+        left: x,
+        top: y,
+        width,
+        height,
+        background: COLORS.void,
+        border: `4px solid ${color}`,
+        borderRadius: 10,
+        overflow: 'hidden',
+        transform: `scale(${scale})`,
+        opacity: scale,
+        boxShadow: `10px 10px 0px ${color}40`,
+        fontFamily: 'monospace',
+      }}
+    >
+      {/* Header */}
+      <div style={{
+        background: color,
+        color: COLORS.void,
+        padding: '5px 10px',
+        fontWeight: 'bold',
+        fontSize: 24,
+        display: 'flex',
+        justifyContent: 'space-between'
+      }}>
+        <span>{title}</span>
+        <span>_</span>
       </div>
+      
+      {/* Content */}
+      <div style={{padding: 15, color: color, fontSize: 20}}>
+        {lines.map((line, i) => {
+          const lineDelay = delay + (i * 10) + 10;
+          const show = frame > lineDelay;
+          return (
+            <div key={i} style={{opacity: show ? 1 : 0, marginBottom: 5}}>
+              {line}
+            </div>
+          );
+        })}
+        {(frame - delay) % 20 < 10 && <div style={{display: 'inline-block', width: 15, height: 25, background: color}} />}
+      </div>
+    </div>
+  );
+};
+
+const ConvoyCoordinatedScene: React.FC = () => {
+    const {width, height} = useVideoConfig();
+    
+    // Layout logic similar to agent-ui
+    // 1920x1080 canvas
+    // Terminals: ~800x450 to fit 4 nicely with gaps
+    const termW = 800;
+    const termH = 450;
+    const gap = 60;
+    const startX = (width - (termW * 2 + gap)) / 2;
+    const startY = (height - (termH * 2 + gap)) / 2;
+
+    return (
+    <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', overflow: 'hidden'}}>
+      <SassyBackground primaryColor={COLORS.void} secondaryColor={'#222'} />
+      
+      <AbsoluteFill>
+        {/* Title overlay */}
+        <div style={{
+            position: 'absolute', 
+            top: 50, 
+            width: '100%', 
+            textAlign: 'center', 
+            zIndex: 10
+        }}>
+            <h1 style={{
+                color: COLORS.hotPink, 
+                fontFamily: FONT_FAMILY, 
+                fontSize: 80, 
+                margin: 0,
+                textShadow: '5px 5px 0px #FFF'
+            }}>CONVOY MODE: ACTIVATED</h1>
+        </div>
+
+        {/* Top Left: Z.ai */}
+        <TerminalBox 
+          title="Z.ai (Librarian)" 
+          color={COLORS.electricBlue}
+          x={startX} 
+          y={startY}
+          width={termW}
+          height={termH}
+          delay={5}
+          lines={[
+            "> Searching docs for 'Remotion'...",
+            "> Found 142 matches in src/",
+            "> Indexing complete.",
+            "> Context prepared for Sisyphus."
+          ]}
+        />
+
+        {/* Top Right: Hugging Face */}
+        <TerminalBox 
+          title="Hugging Face (Assets)" 
+          color={COLORS.hotPink}
+          x={startX + termW + gap} 
+          y={startY}
+          width={termW}
+          height={termH}
+          delay={15}
+          lines={[
+             "> Generating assets...",
+             "> Style: Cyberpunk Sassy",
+             "> Rendering background.png... [OK]",
+             "> Rendering icon.svg... [OK]"
+          ]}
+        />
+
+        {/* Bottom Left: Claude */}
+        <TerminalBox 
+          title="Claude (Sisyphus)" 
+          color={COLORS.neonGreen}
+          x={startX} 
+          y={startY + termH + gap}
+          width={termW}
+          height={termH}
+          delay={25}
+          lines={[
+            "> Received context from Librarian.",
+            "> Analyzing asset requirements...",
+            "> Delegating to Oracle for review...",
+            "> Plan executing: 98% complete."
+          ]}
+        />
+
+        {/* Bottom Right: OpenAI */}
+        <TerminalBox 
+          title="OpenAI (Oracle)" 
+          color={COLORS.warning}
+          x={startX + termW + gap} 
+          y={startY + termH + gap}
+          width={termW}
+          height={termH}
+          delay={35}
+          lines={[
+             "> Reviewing architecture...",
+             "> Optimization vector found.",
+             "> Debugging race condition...",
+             "> All systems nominal."
+          ]}
+        />
+
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };
@@ -271,7 +433,7 @@ export const CreateSuiteTour: React.FC = () => {
       </Sequence>
       
       <Sequence from={SCENE_DURATION * 3} durationInFrames={SCENE_DURATION}>
-        <ConvoyScene />
+        <ConvoyCoordinatedScene />
       </Sequence>
 
        <Sequence from={SCENE_DURATION * 4} durationInFrames={SCENE_DURATION}>

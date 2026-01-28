@@ -56,6 +56,17 @@
           "Architecture diagrams"
         ],
         "direction": "Create clear, comprehensive documentation that helps users and developers understand the system"
+      },
+      {
+        "name": "Asset Generation",
+        "skills": [
+          "Image generation",
+          "Icon creation",
+          "Background generation",
+          "UI asset creation",
+          "Visual content optimization"
+        ],
+        "direction": "Leverage AI models like Stable Diffusion via Hugging Face to generate high-quality visual assets for the project"
       }
     ],
     "bestPractices": [

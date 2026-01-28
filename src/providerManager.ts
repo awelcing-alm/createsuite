@@ -16,7 +16,8 @@ export enum Provider {
   MINIMAX = 'minimax',
   GITHUB_COPILOT = 'github-copilot',
   GEMINI = 'google',
-  OPENCODE_ZEN = 'opencode-zen'
+  OPENCODE_ZEN = 'opencode-zen',
+  HUGGINGFACE = 'huggingface'
 }
 
 /**
@@ -188,6 +189,12 @@ export class ProviderManager {
         name: 'hasOpencodeZen',
         message: chalk.bold('🧘 Do you have OpenCode Zen access?'),
         default: false
+      },
+      {
+        type: 'confirm',
+        name: 'hasHuggingFace',
+        message: chalk.bold('🤗 Do you want to use Hugging Face Inference for image/asset generation?'),
+        default: false
       }
     ]);
 
@@ -254,6 +261,15 @@ export class ProviderManager {
         enabled: true,
         authenticated: false,
         model: 'opencode/claude-opus-4.5'
+      });
+    }
+
+    if (answers.hasHuggingFace) {
+      providers.push({
+        provider: Provider.HUGGINGFACE,
+        enabled: true,
+        authenticated: false,
+        model: 'huggingface/stable-diffusion-3.5-large'
       });
     }
 
@@ -336,6 +352,9 @@ export class ProviderManager {
           break;
         case Provider.OPENCODE_ZEN:
           await this.authenticateOpencodeZen();
+          break;
+        case Provider.HUGGINGFACE:
+          await this.authenticateHuggingFace();
           break;
       }
 
@@ -601,6 +620,30 @@ export class ProviderManager {
   }
 
   /**
+   * Authenticate Hugging Face
+   */
+  private async authenticateHuggingFace(): Promise<void> {
+    console.log(chalk.gray('Hugging Face Inference authentication...'));
+    console.log(chalk.yellow('\nAuthentication steps:'));
+    console.log(chalk.gray('  1. Obtain your Hugging Face API token'));
+    console.log(chalk.gray('  2. Run: opencode auth login'));
+    console.log(chalk.gray('  3. Select Provider: Hugging Face'));
+    
+    const { completed } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'completed',
+        message: 'Have you completed the authentication?',
+        default: false
+      }
+    ]);
+
+    if (completed) {
+      console.log(chalk.green('✓ Hugging Face authentication complete'));
+    }
+  }
+
+  /**
    * Get display name for provider
    */
   private getProviderDisplayName(provider: Provider): string {
@@ -611,7 +654,8 @@ export class ProviderManager {
       [Provider.MINIMAX]: 'MiniMax 2.1',
       [Provider.GEMINI]: 'Google Gemini 3 Pro',
       [Provider.GITHUB_COPILOT]: 'GitHub Copilot',
-      [Provider.OPENCODE_ZEN]: 'OpenCode Zen'
+      [Provider.OPENCODE_ZEN]: 'OpenCode Zen',
+      [Provider.HUGGINGFACE]: 'Hugging Face Inference'
     };
     return names[provider];
   }

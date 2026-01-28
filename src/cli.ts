@@ -573,4 +573,44 @@ program
     }
   });
 
+// UI command
+program
+  .command('ui')
+  .description('Start the CreateSuite Agent UI')
+  .action(async () => {
+    const uiPath = path.join(__dirname, '..', 'agent-ui');
+    const serverPath = path.join(uiPath, 'server', 'index.js');
+    
+    if (!fs.existsSync(serverPath)) {
+      console.log(chalk.red('Agent UI server not found.'));
+      return;
+    }
+    
+    console.log(chalk.blue('Starting CreateSuite Agent UI...'));
+    console.log(chalk.gray(`Server: ${serverPath}`));
+    console.log(chalk.gray('Building UI...'));
+    
+    try {
+      // Build UI first
+      await execAsync('cd agent-ui && npm install && npm run build');
+      
+      console.log(chalk.green('✓ UI built successfully'));
+      console.log(chalk.blue('\n🚀 Server starting on http://localhost:3001'));
+      console.log(chalk.gray('Press Ctrl+C to stop'));
+      
+      // Start server
+      const { spawn } = require('child_process');
+      const server = spawn('node', [serverPath], {
+        stdio: 'inherit'
+      });
+      
+      server.on('error', (err: Error) => {
+        console.error(chalk.red('Failed to start server:'), err);
+      });
+      
+    } catch (error) {
+      console.error(chalk.red('Error starting UI:'), (error as Error).message);
+    }
+  });
+
 program.parse();

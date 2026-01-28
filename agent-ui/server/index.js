@@ -94,7 +94,7 @@ io.on('connection', (socket) => {
 });
 
 // Handle client-side routing, return all requests to React app
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
