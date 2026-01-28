@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as fsp from 'fs/promises';
 import * as path from 'path';
 import { WorkspaceConfig, Agent, Task, Convoy } from './types';
 
@@ -20,8 +21,10 @@ export class ConfigManager {
   async initialize(name: string, repository?: string): Promise<void> {
     const configDir = path.dirname(this.configPath);
     
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true });
+    try {
+      await fsp.access(configDir);
+    } catch {
+      await fsp.mkdir(configDir, { recursive: true });
     }
 
     const config: WorkspaceConfig = {
@@ -45,8 +48,10 @@ export class ConfigManager {
     ];
 
     for (const dir of dirs) {
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+      try {
+        await fsp.access(dir);
+      } catch {
+        await fsp.mkdir(dir, { recursive: true });
       }
     }
   }
@@ -55,19 +60,19 @@ export class ConfigManager {
    * Load workspace configuration
    */
   async loadConfig(): Promise<WorkspaceConfig> {
-    if (!fs.existsSync(this.configPath)) {
+    try {
+      const data = await fsp.readFile(this.configPath, 'utf-8');
+      return JSON.parse(data);
+    } catch (error) {
       throw new Error('Workspace not initialized. Run: cs init');
     }
-
-    const data = fs.readFileSync(this.configPath, 'utf-8');
-    return JSON.parse(data);
   }
 
   /**
    * Save workspace configuration
    */
   async saveConfig(config: WorkspaceConfig): Promise<void> {
-    fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2));
+    await fsp.writeFile(this.configPath, JSON.stringify(config, null, 2));
   }
 
   /**
@@ -80,7 +85,7 @@ export class ConfigManager {
       'tasks',
       `${task.id}.json`
     );
-    fs.writeFileSync(taskPath, JSON.stringify(task, null, 2));
+    await fsp.writeFile(taskPath, JSON.stringify(task, null, 2));
   }
 
   /**
@@ -94,18 +99,18 @@ export class ConfigManager {
       `${taskId}.json`
     );
 
-    if (!fs.existsSync(taskPath)) {
+    try {
+      const data = await fsp.readFile(taskPath, 'utf-8');
+      const task = JSON.parse(data);
+      
+      // Convert date strings back to Date objects
+      task.createdAt = new Date(task.createdAt);
+      task.updatedAt = new Date(task.updatedAt);
+      
+      return task;
+    } catch {
       return null;
     }
-
-    const data = fs.readFileSync(taskPath, 'utf-8');
-    const task = JSON.parse(data);
-    
-    // Convert date strings back to Date objects
-    task.createdAt = new Date(task.createdAt);
-    task.updatedAt = new Date(task.updatedAt);
-    
-    return task;
   }
 
   /**
@@ -114,22 +119,23 @@ export class ConfigManager {
   async listTasks(): Promise<Task[]> {
     const tasksDir = path.join(this.workspaceRoot, '.createsuite', 'tasks');
     
-    if (!fs.existsSync(tasksDir)) {
+    try {
+      const files = await fsp.readdir(tasksDir);
+      const jsonFiles = files.filter((f: string) => f.endsWith('.json'));
+      const tasks: Task[] = [];
+
+      for (const file of jsonFiles) {
+        const taskId = file.replace('.json', '');
+        const task = await this.loadTask(taskId);
+        if (task) {
+          tasks.push(task);
+        }
+      }
+
+      return tasks;
+    } catch {
       return [];
     }
-
-    const files = fs.readdirSync(tasksDir).filter(f => f.endsWith('.json'));
-    const tasks: Task[] = [];
-
-    for (const file of files) {
-      const taskId = file.replace('.json', '');
-      const task = await this.loadTask(taskId);
-      if (task) {
-        tasks.push(task);
-      }
-    }
-
-    return tasks;
   }
 
   /**
@@ -142,7 +148,7 @@ export class ConfigManager {
       'agents',
       `${agent.id}.json`
     );
-    fs.writeFileSync(agentPath, JSON.stringify(agent, null, 2));
+    await fsp.writeFile(agentPath, JSON.stringify(agent, null, 2));
   }
 
   /**
@@ -156,14 +162,14 @@ export class ConfigManager {
       `${agentId}.json`
     );
 
-    if (!fs.existsSync(agentPath)) {
+    try {
+      const data = await fsp.readFile(agentPath, 'utf-8');
+      const agent = JSON.parse(data);
+      agent.createdAt = new Date(agent.createdAt);
+      return agent;
+    } catch {
       return null;
     }
-
-    const data = fs.readFileSync(agentPath, 'utf-8');
-    const agent = JSON.parse(data);
-    agent.createdAt = new Date(agent.createdAt);
-    return agent;
   }
 
   /**
@@ -172,22 +178,23 @@ export class ConfigManager {
   async listAgents(): Promise<Agent[]> {
     const agentsDir = path.join(this.workspaceRoot, '.createsuite', 'agents');
     
-    if (!fs.existsSync(agentsDir)) {
+    try {
+      const files = await fsp.readdir(agentsDir);
+      const jsonFiles = files.filter((f: string) => f.endsWith('.json'));
+      const agents: Agent[] = [];
+
+      for (const file of jsonFiles) {
+        const agentId = file.replace('.json', '');
+        const agent = await this.loadAgent(agentId);
+        if (agent) {
+          agents.push(agent);
+        }
+      }
+
+      return agents;
+    } catch {
       return [];
     }
-
-    const files = fs.readdirSync(agentsDir).filter(f => f.endsWith('.json'));
-    const agents: Agent[] = [];
-
-    for (const file of files) {
-      const agentId = file.replace('.json', '');
-      const agent = await this.loadAgent(agentId);
-      if (agent) {
-        agents.push(agent);
-      }
-    }
-
-    return agents;
   }
 
   /**
@@ -200,7 +207,7 @@ export class ConfigManager {
       'convoys',
       `${convoy.id}.json`
     );
-    fs.writeFileSync(convoyPath, JSON.stringify(convoy, null, 2));
+    await fsp.writeFile(convoyPath, JSON.stringify(convoy, null, 2));
   }
 
   /**
@@ -214,14 +221,14 @@ export class ConfigManager {
       `${convoyId}.json`
     );
 
-    if (!fs.existsSync(convoyPath)) {
+    try {
+      const data = await fsp.readFile(convoyPath, 'utf-8');
+      const convoy = JSON.parse(data);
+      convoy.createdAt = new Date(convoy.createdAt);
+      return convoy;
+    } catch {
       return null;
     }
-
-    const data = fs.readFileSync(convoyPath, 'utf-8');
-    const convoy = JSON.parse(data);
-    convoy.createdAt = new Date(convoy.createdAt);
-    return convoy;
   }
 
   /**
@@ -230,21 +237,22 @@ export class ConfigManager {
   async listConvoys(): Promise<Convoy[]> {
     const convoysDir = path.join(this.workspaceRoot, '.createsuite', 'convoys');
     
-    if (!fs.existsSync(convoysDir)) {
+    try {
+      const files = await fsp.readdir(convoysDir);
+      const jsonFiles = files.filter((f: string) => f.endsWith('.json'));
+      const convoys: Convoy[] = [];
+
+      for (const file of jsonFiles) {
+        const convoyId = file.replace('.json', '');
+        const convoy = await this.loadConvoy(convoyId);
+        if (convoy) {
+          convoys.push(convoy);
+        }
+      }
+
+      return convoys;
+    } catch {
       return [];
     }
-
-    const files = fs.readdirSync(convoysDir).filter(f => f.endsWith('.json'));
-    const convoys: Convoy[] = [];
-
-    for (const file of files) {
-      const convoyId = file.replace('.json', '');
-      const convoy = await this.loadConvoy(convoyId);
-      if (convoy) {
-        convoys.push(convoy);
-      }
-    }
-
-    return convoys;
   }
 }

@@ -13,7 +13,7 @@ import { ConvoyManager } from './convoyManager';
 import { GitIntegration } from './gitIntegration';
 import { OAuthManager } from './oauthManager';
 import { ProviderManager } from './providerManager';
-import { TaskStatus, TaskPriority, ConvoyStatus, AgentStatus } from './types';
+import { TaskStatus, TaskPriority, ConvoyStatus, AgentStatus, Task } from './types';
 
 const execAsync = promisify(exec);
 
@@ -125,7 +125,11 @@ taskCmd
     const workspaceRoot = getWorkspaceRoot();
     const taskManager = new TaskManager(workspaceRoot);
     
-    const filters: any = {};
+    const filters: {
+      status?: TaskStatus;
+      assignedAgent?: string;
+      priority?: TaskPriority;
+    } = {};
     if (options.status) filters.status = options.status;
     if (options.agent) filters.assignedAgent = options.agent;
     
@@ -543,7 +547,7 @@ program
       console.log(chalk.blue('Opening Remotion preview...'));
       console.log(chalk.gray('This will open the Remotion studio in your browser.'));
       
-      exec('npm run remotion:preview', (error: any, stdout: any, stderr: any) => {
+      exec('npm run remotion:preview', (error: Error | null, stdout: string, stderr: string) => {
         if (error) {
           console.log(chalk.red(`Error: ${error.message}`));
           return;
@@ -566,9 +570,11 @@ program
         console.log(chalk.green('✓ Video built successfully!'));
         console.log(chalk.gray('Location: public/tour.mp4'));
         console.log(chalk.gray('\nRun "cs tour" to view the landing page with the video.'));
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.log(chalk.red('Error building video:'));
-        console.log(chalk.red(error.message));
+        if (error instanceof Error) {
+          console.log(chalk.red(error.message));
+        }
       }
     }
   });

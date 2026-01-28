@@ -17,6 +17,9 @@ cs video
 
 # Preview the video in Remotion studio
 cs video --preview
+
+# Build Agent UI demo video
+npm run video:build:agent-ui
 ```
 
 ## ✨ AI Provider Management
@@ -390,15 +393,48 @@ CreateSuite is inspired by [Gastown](https://github.com/steveyegge/gastown), Ste
 - Convoy-based task grouping
 - First-class agent citizenship
 
+## Documentation
+
+CreateSuite has comprehensive documentation organized by topic:
+
+### 📚 User Guides
+- [Getting Started Guide](docs/guides/GETTING_STARTED.md) - Quick start tutorial
+- [Examples](docs/guides/EXAMPLES.md) - Common workflows and patterns
+
+### 🏗️ Architecture
+- [Architecture Overview](docs/architecture/ARCHITECTURE.md) - System design and components
+
+### ⚙️ Providers
+- [Provider Setup Guide](docs/providers/PROVIDER_SETUP.md) - Configure AI model providers
+- [Integration Guide](docs/providers/INTEGRATION_GUIDE.md) - oh-my-opencode integration
+- [OpenAI Authentication](docs/providers/OPENAI_AUTH.md) - OpenAI setup with API key support
+- [Remotion Implementation](docs/providers/REMOTION_IMPLEMENTATION.md) - Video tour system
+- [Provider Implementation](docs/providers/PROVIDER_IMPLEMENTATION.md) - Provider management system
+
+### 📋 Planning & Roadmap
+- [Kickoff Project](docs/planning/KICKOFF_PROJECT.md) - Complete 10-phase roadmap
+- [Executive Summary](docs/planning/EXECUTIVE_SUMMARY.md) - High-level overview
+- [Immediate Actions](docs/planning/IMMEDIATE_ACTIONS.md) - 7-day action plan
+- [Polish Checklist](docs/planning/POLISH_CHECKLIST.md) - Progress tracking
+- [Task Templates](docs/planning/TASK_TEMPLATES.md) - Create tasks quickly
+- [Convoy Examples](docs/planning/CONVOY_EXAMPLES.md) - Organize work effectively
+- [Project Overview](docs/planning/PROJECT_OVERVIEW.txt) - Visual project structure
+
+### 🧪 Testing
+- [Testing Guide](docs/testing/TESTING.md) - Test the video tour feature
+
+### 📂 Legacy Documentation
+- [Provider Setup Demo](docs/legacy/PROVIDER_SETUP_DEMO.md) - Historical UI flow demonstrations
+
 ## Contributing
 
 Contributions are welcome! We're actively working on the professional polish project. See:
 
-- **[Kickoff Project Plan](KICKOFF_PROJECT.md)** - Complete 10-phase roadmap
-- **[Quick Checklist](POLISH_CHECKLIST.md)** - Progress tracking and quick wins
-- **[Immediate Actions](IMMEDIATE_ACTIONS.md)** - 7-day action plan
-- **[Task Templates](TASK_TEMPLATES.md)** - Templates for creating tasks
-- **[Convoy Examples](CONVOY_EXAMPLES.md)** - How to organize work
+- **[Kickoff Project Plan](docs/planning/KICKOFF_PROJECT.md)** - Complete 10-phase roadmap
+- **[Quick Checklist](docs/planning/POLISH_CHECKLIST.md)** - Progress tracking and quick wins
+- **[Immediate Actions](docs/planning/IMMEDIATE_ACTIONS.md)** - 7-day action plan
+- **[Task Templates](docs/planning/TASK_TEMPLATES.md)** - Templates for creating tasks
+- **[Convoy Examples](docs/planning/CONVOY_EXAMPLES.md)** - How to organize work
 
 Key focus areas:
 
@@ -417,7 +453,7 @@ Check out the [issues](https://github.com/awelcing-alm/createsuite/issues) or jo
 **Target:** v1.0.0 Production Release  
 **Timeline:** 8-10 weeks  
 
-See [KICKOFF_PROJECT.md](KICKOFF_PROJECT.md) for the complete roadmap.
+See [Kickoff Project Plan](docs/planning/KICKOFF_PROJECT.md) for the complete roadmap.
 
 ## License
 

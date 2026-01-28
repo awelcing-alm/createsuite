@@ -4,11 +4,13 @@ import { Window, WindowHeader, WindowContent, Button } from 'react95';
 import Draggable from 'react-draggable';
 
 const StyledWindow = styled(Window)`
-  width: 600px;
-  height: 400px;
+  width: min(600px, calc(100vw - 100px));
+  height: min(400px, calc(100vh - 100px));
   position: absolute;
   display: flex;
   flex-direction: column;
+  min-width: 300px;
+  min-height: 200px;
 `;
 
 const StyledWindowContent = styled(WindowContent)`

@@ -1,11 +1,41 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { io, Socket } from 'socket.io-client';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { Window, WindowHeader, WindowContent, Button } from 'react95';
 import Draggable from 'react-draggable';
+
+// Loading spinner animation
+const spin = keyframes`
+  to { transform: rotate(360deg); }
+`;
+
+const Spinner = styled.div`
+  width: 20px;
+  height: 20px;
+  border: 2px solid #fff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: ${spin} 0.8s linear infinite;
+`;
+
+const LoadingOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #fff;
+  font-size: 14px;
+`;
 
 const TerminalContainer = styled.div`
   width: 100%;
@@ -21,11 +51,13 @@ const TerminalContainer = styled.div`
 `;
 
 const StyledWindow = styled(Window)`
-  width: 600px;
-  height: 400px;
+  width: min(600px, calc(100vw - 100px));
+  height: min(400px, calc(100vh - 100px));
   position: absolute;
   display: flex;
   flex-direction: column;
+  min-width: 300px;
+  min-height: 200px;
 `;
 
 const StyledWindowContent = styled(WindowContent)`
@@ -61,6 +93,8 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
   const xtermRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
 
   useEffect(() => {
     // Initialize Socket - use relative path for production compatibility
@@ -101,8 +135,10 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
 
     // Socket Events
     socketRef.current.on('connect', () => {
+      setConnectionStatus('connected');
       term.writeln('\x1b[32mConnected to Agent Backend...\x1b[0m');
       socketRef.current?.emit('spawn', { cols: term.cols, rows: term.rows });
+      setIsLoading(false);
       
       if (initialCommand) {
         // Send initial command once connected and spawned
@@ -111,6 +147,11 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
           socketRef.current?.emit('input', initialCommand + '\r');
         }, 500);
       }
+    });
+
+    socketRef.current.on('connect_error', () => {
+      setConnectionStatus('error');
+      term.writeln('\x1b[31mFailed to connect to Agent Backend...\x1b[0m');
     });
 
     socketRef.current.on('output', (data: string) => {
@@ -155,6 +196,16 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
           </WindowHeader>
           <StyledWindowContent>
             <TerminalContainer ref={terminalRef} onMouseDown={(e) => e.stopPropagation()} />
+            {isLoading && (
+              <LoadingOverlay>
+                <Spinner />
+                <span>
+                  {connectionStatus === 'error' 
+                    ? 'Connection failed' 
+                    : 'Connecting to Agent Backend...'}
+                </span>
+              </LoadingOverlay>
+            )}
           </StyledWindowContent>
         </StyledWindow>
       </div>

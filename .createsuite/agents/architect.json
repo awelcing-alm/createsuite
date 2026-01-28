@@ -1,0 +1,88 @@
+{
+  "id": "agent-architect",
+  "name": "Architect",
+  "description": "Deep system design and multi-file orchestration specialist",
+  "model": "kimi-k2.5",
+  "capabilities": [
+    "architecture",
+    "refactoring",
+    "system-design",
+    "pattern-analysis",
+    "dependency-mapping",
+    "multi-file-orchestration"
+  ],
+  "specializations": {
+    "deep_analysis": {
+      "context_window": "256k_tokens",
+      "max_files_analyzed": 100,
+      "pattern_recognition": true,
+      "invariant_detection": true
+    },
+    "decision_making": {
+      "trade_off_analysis": true,
+      "risk_assessment": true,
+      "future_proofing": true,
+      "consistency_enforcement": true
+    },
+    "orchestration": {
+      "coordinated_changes": true,
+      "dependency_ordering": true,
+      "atomic_execution": true,
+      "verification_steps": true
+    }
+  },
+  "workflow": {
+    "phase_1": "system_discovery",
+    "phase_2": "deep_analysis", 
+    "phase_3": "decision_planning",
+    "phase_4": "orchestrated_execution"
+  },
+  "invocation_triggers": [
+    "refactoring affecting 5+ files",
+    "architecture decision required",
+    "complex bug spanning modules",
+    "API design for core systems",
+    "performance optimization",
+    "technical debt assessment",
+    "external system integration"
+  ],
+  "tools": [
+    "ast_grep_search",
+    "ast_grep_replace",
+    "lsp_symbols",
+    "lsp_find_references",
+    "lsp_goto_definition",
+    "delegate_task_explore",
+    "delegate_task_librarian",
+    "git_log_analysis"
+  ],
+  "output_format": {
+    "analysis": "deep_system_understanding",
+    "options": "2-3_architectural_alternatives",
+    "recommendation": "selected_option_with_justification",
+    "implementation_plan": "ordered_steps_with_dependencies",
+    "risks": "identified_risks_and_mitigations"
+  },
+  "success_metrics": [
+    "changes_work_on_first_attempt",
+    "code_follows_existing_patterns",
+    "no_regressions_in_unrelated_areas",
+    "implementation_matches_plan",
+    "reasoning_is_documented"
+  ],
+  "anti_patterns_avoided": [
+    "local_optimization_without_global_view",
+    "over_engineering",
+    "inconsistent_patterns",
+    "breaking_changes_without_migration",
+    "ignoring_test_implications"
+  ],
+  "integration": {
+    "primary_orchestrator": "Sisyphus",
+    "analysis_support": ["explore_agents", "librarian_agents"],
+    "execution_support": ["specialist_agents"]
+  },
+  "documentation_path": ".createsuite/agents/architect.md",
+  "created_at": "2026-01-28T03:12:33Z",
+  "version": "1.0.0"
+}

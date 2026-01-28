@@ -4,9 +4,18 @@ import { styleReset, AppBar, Toolbar, Button, MenuList, MenuListItem, Separator 
 import original from 'react95/dist/themes/original';
 import ms_sans_serif from 'react95/dist/fonts/ms_sans_serif.woff2';
 import ms_sans_serif_bold from 'react95/dist/fonts/ms_sans_serif_bold.woff2';
+import { v4 as uuidv4 } from 'uuid';
 import TerminalWindow from './components/TerminalWindow';
 import ContentWindow from './components/ContentWindow';
 import { Monitor, Terminal as TerminalIcon, Cpu } from 'lucide-react';
+
+// UI Command payload type
+export interface UiCommandPayload {
+  type: 'image' | 'browser';
+  src?: string;
+  url?: string;
+  title?: string;
+}
 
 const GlobalStyles = createGlobalStyle`
   ${styleReset}
@@ -83,7 +92,7 @@ const App: React.FC = () => {
     contentOrCommand?: string, 
     customPosition?: { x: number, y: number }
   ) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = uuidv4();
     
     setWindows(prev => {
       const maxZ = prev.reduce((max, t) => Math.max(max, t.zIndex), topZIndex);
@@ -137,15 +146,15 @@ const App: React.FC = () => {
     setWindows(prev => prev.map(t => t.id === id ? { ...t, zIndex: newZ } : t));
   };
 
-  const handleUiCommand = (payload: any) => {
+  const handleUiCommand = (payload: UiCommandPayload) => {
     console.log('Received UI Command:', payload);
     if (!payload.type) return;
 
     if (payload.type === 'image') {
       // Assuming payload.src is relative to workspace root
       // We prepend /workspace/ to make it accessible via our static route
-      const src = payload.src.startsWith('http') ? payload.src : `/workspace/${payload.src}`;
-      spawnWindow('image', payload.title || 'Image Preview', src);
+      const src = payload.src?.startsWith('http') ? payload.src : `/workspace/${payload.src}`;
+      spawnWindow('image', payload.title || 'Image Preview', src || '');
     } else if (payload.type === 'browser') {
       spawnWindow('browser', payload.title || 'Web Preview', payload.url);
     }

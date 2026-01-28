@@ -1,6 +1,16 @@
 import * as fs from 'fs';
+import * as fsp from 'fs/promises';
 import * as path from 'path';
 import { OAuthConfig } from './types';
+
+/**
+ * Token data structure for OAuth storage
+ */
+interface TokenData {
+  accessToken: string;
+  createdAt: string;
+  expiresAt?: string;
+}
 
 /**
  * OAuth integration for coding plan authentication
@@ -18,12 +28,15 @@ export class OAuthManager {
    * Check if OAuth token exists and is valid
    */
   async hasValidToken(): Promise<boolean> {
-    if (!fs.existsSync(this.tokenPath)) {
+    try {
+      await fsp.access(this.tokenPath);
+    } catch {
       return false;
     }
 
     try {
-      const tokenData = JSON.parse(fs.readFileSync(this.tokenPath, 'utf-8'));
+      const data = await fsp.readFile(this.tokenPath, 'utf-8');
+      const tokenData = JSON.parse(data);
       
       // Check if token is expired (simple check)
       if (tokenData.expiresAt) {
@@ -43,12 +56,15 @@ export class OAuthManager {
    * Get stored OAuth token
    */
   async getToken(): Promise<string | null> {
-    if (!fs.existsSync(this.tokenPath)) {
+    try {
+      await fsp.access(this.tokenPath);
+    } catch {
       return null;
     }
 
     try {
-      const tokenData = JSON.parse(fs.readFileSync(this.tokenPath, 'utf-8'));
+      const data = await fsp.readFile(this.tokenPath, 'utf-8');
+      const tokenData = JSON.parse(data);
       return tokenData.accessToken || null;
     } catch {
       return null;
@@ -59,7 +75,7 @@ export class OAuthManager {
    * Store OAuth token
    */
   async storeToken(accessToken: string, expiresIn?: number): Promise<void> {
-    const tokenData: any = {
+    const tokenData: TokenData = {
       accessToken,
       createdAt: new Date().toISOString()
     };
@@ -71,11 +87,13 @@ export class OAuthManager {
     }
 
     const tokenDir = path.dirname(this.tokenPath);
-    if (!fs.existsSync(tokenDir)) {
-      fs.mkdirSync(tokenDir, { recursive: true });
+    try {
+      await fsp.access(tokenDir);
+    } catch {
+      await fsp.mkdir(tokenDir, { recursive: true });
     }
 
-    fs.writeFileSync(this.tokenPath, JSON.stringify(tokenData, null, 2), {
+    await fsp.writeFile(this.tokenPath, JSON.stringify(tokenData, null, 2), {
       mode: 0o600 // Restrict permissions
     });
   }
@@ -84,8 +102,11 @@ export class OAuthManager {
    * Clear stored token
    */
   async clearToken(): Promise<void> {
-    if (fs.existsSync(this.tokenPath)) {
-      fs.unlinkSync(this.tokenPath);
+    try {
+      await fsp.access(this.tokenPath);
+      await fsp.unlink(this.tokenPath);
+    } catch {
+      // Token doesn't exist, nothing to clear
     }
   }
 

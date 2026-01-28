@@ -15,7 +15,9 @@
     "postinstall": "node scripts/postinstall.js || true",
     "remotion:preview": "remotion preview remotion/src/index.ts",
     "remotion:render": "remotion render remotion/src/index.ts CreateSuiteTour public/tour.mp4",
-    "video:build": "npm run remotion:render"
+    "remotion:render:agent-ui": "remotion render remotion/src/index.ts AgentUITour public/agent-ui-tour.mp4",
+    "video:build": "npm run remotion:render",
+    "video:build:agent-ui": "npm run remotion:render:agent-ui"
   },
   "keywords": [
     "opencode",
