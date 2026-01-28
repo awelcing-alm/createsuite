@@ -1,0 +1,10 @@
+{
+  "id": "cs-12rfx",
+  "title": "Implement task templates and presets",
+  "description": "Create reusable task templates for common task types (feature, bugfix, documentation, testing). Add preset convoys for common workflows (sprint setup, bug triage, release preparation).",
+  "status": "open",
+  "createdAt": "2026-01-28T02:14:09.688Z",
+  "updatedAt": "2026-01-28T02:14:09.688Z",
+  "priority": "medium",
+  "tags": []
+}
