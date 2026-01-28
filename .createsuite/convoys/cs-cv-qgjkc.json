@@ -1,0 +1,14 @@
+{
+  "id": "cs-cv-qgjkc",
+  "name": "Git Task System",
+  "description": "Enhance git-based task tracking with templates, presets, subtasks, milestones, time tracking, burndown charts, sprint planning, and integration with issue trackers.",
+  "tasks": [
+    "cs-12rfx",
+    "cs-5bbah",
+    "cs-7ua7o",
+    "cs-kd55b",
+    "cs-elneg"
+  ],
+  "createdAt": "2026-01-28T02:14:43.660Z",
+  "status": "active"
+}
