@@ -7,6 +7,9 @@ import ms_sans_serif_bold from 'react95/dist/fonts/ms_sans_serif_bold.woff2';
 import { v4 as uuidv4 } from 'uuid';
 import TerminalWindow from './components/TerminalWindow';
 import ContentWindow from './components/ContentWindow';
+import GlobalMapWindow from './components/GlobalMapWindow';
+import type { GlobalMapAgent, GlobalMapMessage } from './components/GlobalMapWindow';
+import SystemMonitor from './components/SystemMonitor';
 import { Monitor, Terminal as TerminalIcon, Cpu } from 'lucide-react';
 
 // UI Command payload type
@@ -78,41 +81,51 @@ interface BrowserState extends BaseWindow {
   content: string; // URL
 }
 
-type WindowState = TerminalState | ImageState | BrowserState;
+interface GlobalMapState extends BaseWindow {
+  type: 'global-map';
+}
+
+interface SystemMonitorState extends BaseWindow {
+  type: 'system-monitor';
+}
+
+type WindowState = TerminalState | ImageState | BrowserState | GlobalMapState | SystemMonitorState;
 
 const App: React.FC = () => {
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [agentsMenuOpen, setAgentsMenuOpen] = useState(false);
   const [topZIndex, setTopZIndex] = useState(1);
+  const [globalAgents, setGlobalAgents] = useState<GlobalMapAgent[]>([]);
+  const [globalMessages, setGlobalMessages] = useState<GlobalMapMessage[]>([]);
 
   const spawnWindow = (
-    type: 'terminal' | 'image' | 'browser', 
-    title: string, 
-    contentOrCommand?: string, 
+    type: 'terminal' | 'image' | 'browser' | 'global-map' | 'system-monitor',
+    title: string,
+    contentOrCommand?: string,
     customPosition?: { x: number, y: number }
   ) => {
     const id = uuidv4();
-    
+
     setWindows(prev => {
       const maxZ = prev.reduce((max, t) => Math.max(max, t.zIndex), topZIndex);
       const newZ = maxZ + 1;
-      setTopZIndex(newZ); // Keep state in sync eventually
-      
+      setTopZIndex(newZ);
+
       let position;
       if (customPosition) {
         position = customPosition;
       } else {
         const offset = prev.length * 20;
-        position = { 
-          x: 50 + (offset % 300), 
-          y: 50 + (offset % 300) 
+        position = {
+          x: 50 + (offset % 300),
+          y: 50 + (offset % 300)
         };
       }
 
       const base = {
         id,
-        title: `${title}`, // - ${id.substr(0, 4)}`, // Cleaner titles
+        title: `${title}`,
         zIndex: newZ,
         position
       };
@@ -121,19 +134,24 @@ const App: React.FC = () => {
         return [...prev, { ...base, type: 'terminal', initialCommand: contentOrCommand }];
       } else if (type === 'image') {
         return [...prev, { ...base, type: 'image', content: contentOrCommand || '' }];
-      } else {
+      } else if (type === 'browser') {
         return [...prev, { ...base, type: 'browser', content: contentOrCommand || '' }];
+      } else if (type === 'system-monitor') {
+        return [...prev, { ...base, type: 'system-monitor' }];
       }
+      return [...prev, { ...base, type: 'global-map' }];
     });
-    
-    // Only close menus if initiated manually, but hard to tell here.
-    // For now, always close.
+
     setStartMenuOpen(false);
     setAgentsMenuOpen(false);
   };
 
   const spawnTerminal = (title: string = 'OpenCode Terminal', command?: string, customPosition?: { x: number, y: number }) => {
     spawnWindow('terminal', title, command, customPosition);
+  };
+
+  const spawnGlobalMap = () => {
+    spawnWindow('global-map', 'Agent Village');
   };
 
   const closeWindow = (id: string) => {
@@ -177,7 +195,79 @@ const App: React.FC = () => {
       
       // Bottom Right
       setTimeout(() => spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle (OpenAI)..."; opencode', { x: w - 620, y: h - 480 }), 600);
+      
+      setTimeout(() => spawnTerminal('Architect (Kimi-K2.5)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=kimi-k2.5; echo "Starting Architect (Kimi-K2.5) - Deep System Design Specialist..."; opencode', { x: w / 2 - 310, y: h / 2 - 240 }), 800);
     }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const mapStatus = (status: string): GlobalMapAgent['status'] => {
+      switch (status) {
+        case 'working':
+          return 'working';
+        case 'error':
+          return 'error';
+        case 'offline':
+          return 'offline';
+        default:
+          return 'idle';
+      }
+    };
+
+    const fetchGlobalData = async () => {
+      try {
+        const [agentsRes, mailboxRes] = await Promise.all([
+          fetch('/api/agents'),
+          fetch('/api/mailbox')
+        ]);
+
+        if (!agentsRes.ok || !mailboxRes.ok) return;
+
+        const agentsPayload = await agentsRes.json();
+        const mailboxPayload = await mailboxRes.json();
+
+        if (!isMounted) return;
+
+        const agents = (agentsPayload.data || []).map((agent: any, index: number) => ({
+          id: agent.id,
+          name: agent.name,
+          status: mapStatus(agent.status),
+          skills: agent.capabilities || [],
+          position: {
+            x: 160 + (index % 3) * 200,
+            y: 140 + Math.floor(index / 3) * 160
+          }
+        }));
+
+        const messages = (mailboxPayload.data || []).map((message: any) => ({
+          id: message.id,
+          from: message.from,
+          to: message.to,
+          kind: message.kind || 'system',
+          subject: message.subject,
+          body: message.body,
+          timestamp: message.timestamp,
+          snippet: message.subject || message.body?.slice(0, 48) || '',
+          status: message.read ? 'sent' : 'queued',
+          createdAt: message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : ''
+        }));
+
+        setGlobalAgents(agents);
+        setGlobalMessages(messages);
+      } catch (error) {
+        // fail silent; fallback UI handles missing data
+      }
+    };
+
+    fetchGlobalData();
+    const interval = window.setInterval(fetchGlobalData, 4000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -199,19 +289,44 @@ const App: React.FC = () => {
                 onUiCommand={handleUiCommand}
               />
             );
-          } else {
+          } else if (win.type === 'global-map') {
             return (
-               <ContentWindow
+              <GlobalMapWindow
                 key={win.id}
                 id={win.id}
                 title={win.title}
-                type={win.type}
-                content={win.content}
                 zIndex={win.zIndex}
                 initialPosition={win.position}
                 onClose={closeWindow}
                 onFocus={focusWindow}
-               />
+                agents={globalAgents}
+                messages={globalMessages}
+              />
+            );
+          } else if (win.type === 'system-monitor') {
+            return (
+              <SystemMonitor
+                key={win.id}
+                id={win.id}
+                zIndex={win.zIndex}
+                initialPosition={win.position}
+                onClose={closeWindow}
+                onFocus={focusWindow}
+              />
+            );
+          } else {
+            return (
+               <ContentWindow
+                 key={win.id}
+                 id={win.id}
+                 title={win.title}
+                 type={win.type}
+                 content={win.content}
+                 zIndex={win.zIndex}
+                 initialPosition={win.position}
+                 onClose={closeWindow}
+                 onFocus={focusWindow}
+                />
             );
           }
         })}
@@ -287,8 +402,25 @@ const App: React.FC = () => {
                             />
                             Oracle (OpenAI)
                           </MenuListItem>
+                          <MenuListItem onClick={() => spawnTerminal('Architect (Kimi-K2.5)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=kimi-k2.5; echo "Starting Architect (Kimi-K2.5) - Deep System Design Specialist..."; opencode')}>
+                            <img
+                              src="https://win98icons.alexmeub.com/icons/png/building-0.png"
+                              alt="architect"
+                              style={{ height: '16px', marginRight: 8 }}
+                            />
+                            Architect (Kimi-K2.5)
+                          </MenuListItem>
                         </MenuList>
                       )}
+                    </MenuListItem>
+                    <Separator />
+                    <MenuListItem onClick={spawnGlobalMap}>
+                      <img
+                        src="https://win98icons.alexmeub.com/icons/png/world-2.png"
+                        alt="map"
+                        style={{ height: '16px', marginRight: 8 }}
+                      />
+                      Agent Village
                     </MenuListItem>
                     <Separator />
                     <MenuListItem onClick={() => {
@@ -306,6 +438,8 @@ const App: React.FC = () => {
                       
                       // Bottom Right
                       setTimeout(() => spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle (OpenAI)..."; opencode', { x: w - 620, y: h - 480 }), 600);
+                      
+                      setTimeout(() => spawnTerminal('Architect (Kimi-K2.5)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=kimi-k2.5; echo "Starting Architect (Kimi-K2.5) - Deep System Design Specialist..."; opencode', { x: w / 2 - 310, y: h / 2 - 240 }), 800);
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center' }}>
                         <img
@@ -321,7 +455,7 @@ const App: React.FC = () => {
                       New Terminal
                     </MenuListItem>
                     <Separator />
-                    <MenuListItem disabled>
+                    <MenuListItem onClick={() => spawnWindow('system-monitor', 'System Monitor')}>
                       <Monitor size={16} style={{ marginRight: 8 }} />
                       System Monitor
                     </MenuListItem>
@@ -331,21 +465,23 @@ const App: React.FC = () => {
               
               {/* Taskbar Items */}
               <div style={{ flex: 1, display: 'flex', marginLeft: 10, overflowX: 'auto' }}>
-                 {windows.map(win => (
-                   <Button
-                    key={win.id}
-                    active={win.zIndex === topZIndex}
-                    onClick={() => focusWindow(win.id)}
-                    style={{ marginRight: 4, minWidth: 100, textAlign: 'left', display: 'flex', alignItems: 'center' }}
-                   >
-                     {win.type === 'terminal' && <img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" alt="term" style={{ height: '16px', marginRight: 4 }} />}
-                     {win.type === 'image' && <img src="https://win98icons.alexmeub.com/icons/png/paint_file-2.png" alt="img" style={{ height: '16px', marginRight: 4 }} />}
-                     {win.type === 'browser' && <img src="https://win98icons.alexmeub.com/icons/png/msie1-0.png" alt="web" style={{ height: '16px', marginRight: 4 }} />}
-                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                       {win.title}
-                     </span>
-                   </Button>
-                 ))}
+                   {windows.map(win => (
+                    <Button
+                     key={win.id}
+                     active={win.zIndex === topZIndex}
+                     onClick={() => focusWindow(win.id)}
+                     style={{ marginRight: 4, minWidth: 100, textAlign: 'left', display: 'flex', alignItems: 'center' }}
+                     >
+                       {win.type === 'terminal' && <img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" alt="term" style={{ height: '16px', marginRight: 4 }} />}
+                       {win.type === 'image' && <img src="https://win98icons.alexmeub.com/icons/png/paint_file-2.png" alt="img" style={{ height: '16px', marginRight: 4 }} />}
+                       {win.type === 'browser' && <img src="https://win98icons.alexmeub.com/icons/png/msie1-0.png" alt="web" style={{ height: '16px', marginRight: 4 }} />}
+                       {win.type === 'global-map' && <img src="https://win98icons.alexmeub.com/icons/png/world-2.png" alt="map" style={{ height: '16px', marginRight: 4 }} />}
+                       {win.type === 'system-monitor' && <img src="https://win98icons.alexmeub.com/icons/png/monitor-0.png" alt="monitor" style={{ height: '16px', marginRight: 4 }} />}
+                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {win.title}
+                      </span>
+                     </Button>
+                  ))}
               </div>
 
               <div style={{ paddingRight: 6 }}>
