@@ -1,0 +1,10 @@
+{
+  "id": "cs-kd55b",
+  "title": "architecture,runtime,agents,assignment,smart",
+  "description": "Create automatic task assignment algorithm that matches task requirements (tags, priority, skills needed) to agent capabilities. Agents declare their skills, tasks declare requirements. System finds best match and assigns automatically.",
+  "status": "open",
+  "createdAt": "2026-01-28T02:13:06.270Z",
+  "updatedAt": "2026-01-28T02:13:06.270Z",
+  "priority": "high",
+  "tags": []
+}
