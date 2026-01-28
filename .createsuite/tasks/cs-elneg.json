@@ -1,0 +1,10 @@
+{
+  "id": "cs-elneg",
+  "title": "architecture,runtime,agents,monitoring,metrics",
+  "description": "Track agent performance metrics: tasks completed, time taken, success rate, error rate, throughput. Store historical data for agent capability assessment and assignment optimization.",
+  "status": "open",
+  "createdAt": "2026-01-28T02:13:06.595Z",
+  "updatedAt": "2026-01-28T02:13:06.595Z",
+  "priority": "medium",
+  "tags": []
+}
