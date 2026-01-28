@@ -1,0 +1,14 @@
+{
+  "id": "cs-agj9s",
+  "title": "Enhance taskbar with process indicators",
+  "description": "Add visual indicators to taskbar buttons showing which agent windows are active/working. Add CPU/memory usage display for monitoring system resources.",
+  "status": "open",
+  "createdAt": "2026-01-28T02:10:11.204Z",
+  "updatedAt": "2026-01-28T02:10:11.204Z",
+  "priority": "medium",
+  "tags": [
+    "agent-ui",
+    "feature",
+    "monitoring"
+  ]
+}
