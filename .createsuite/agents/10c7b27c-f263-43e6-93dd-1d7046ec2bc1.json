@@ -1,12 +1,23 @@
 {
   "id": "10c7b27c-f263-43e6-93dd-1d7046ec2bc1",
   "name": "demo-agent",
-  "status": "idle",
-  "mailbox": [],
+  "status": "working",
+  "mailbox": [
+    {
+      "id": "6160d55f-9b95-4cb3-ab5e-0b2166c0e915",
+      "from": "system",
+      "to": "10c7b27c-f263-43e6-93dd-1d7046ec2bc1",
+      "subject": "New Task Assignment",
+      "body": "You have been assigned task: cs-r6w71",
+      "timestamp": "2026-02-02T17:58:17.489Z",
+      "read": false
+    }
+  ],
   "capabilities": [
     "frontend",
     "debugging",
     "documentation"
   ],
-  "createdAt": "2026-02-02T17:58:06.337Z"
+  "createdAt": "2026-02-02T17:58:06.337Z",
+  "currentTask": "cs-r6w71"
 }
