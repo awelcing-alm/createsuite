@@ -1,0 +1,36 @@
+SCENE 4: Desktop UI and First Task
+
+Test: Can user launch Desktop app and see agent work?
+
+Expected Behavior (from demo script):
+- User runs `cs ui`
+- Electron window opens with Windows 95 aesthetic
+- Shows Sisyphus agent working on task
+- Real-time terminal output visible
+- Click "Agent Village" to see visualization
+
+Actual Status: BLOCKER - CANNOT LAUNCH
+❌ CRITICAL ISSUE: `npm run electron:dev` script does NOT exist
+   - entrypoint.ts expects to run this script
+   - agent-ui/package.json only has: dev, build, lint, preview
+   - electron:dev is documented in ELECTRON.md but not in package.json
+   
+✅ Command exists: `cs ui --help` shows --demo flag
+✅ Electron files exist: agent-ui/electron/main.js, preload.js
+✅ Documentation exists: ELECTRON.md explains electron:dev workflow
+
+GAP ANALYSIS:
+❌ BLOCKER: Missing npm script prevents Desktop launch
+❌ Cannot test Desktop app functionality
+❌ Cannot capture screenshots of UI
+❌ Cannot verify agent visualization
+
+ROOT CAUSE:
+The Task 5 deliverable was to "Fix Desktop App Single-Process Launch"
+- Added `--demo` flag to CLI ✅
+- Modified cli.ts ui command ✅
+- BUT did not verify agent-ui/package.json has electron:dev script ❌
+
+VERDICT: BLOCKER
+Desktop app cannot be launched due to missing npm script
+All other CLI functionality is working

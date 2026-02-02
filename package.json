@@ -4,7 +4,7 @@
   "description": "Orchestrated swarm system for OpenCode agents with git-based task tracking",
   "main": "dist/index.js",
   "bin": {
-    "createsuite": "./dist/cli.js",
+    "createsuite": "./bin/createsuite.js",
     "cs": "./dist/cli.js"
   },
   "scripts": {

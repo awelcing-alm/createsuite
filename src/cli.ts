@@ -583,7 +583,8 @@ program
 program
   .command('ui')
   .description('Start the CreateSuite Agent UI')
-  .action(async () => {
+  .option('--demo', 'Launch in demo mode with pre-configured agents')
+  .action(async (options) => {
     const uiPath = path.join(__dirname, '..', 'agent-ui');
     const serverPath = path.join(uiPath, 'server', 'index.js');
     
@@ -594,6 +595,9 @@ program
     
     console.log(chalk.blue('Starting CreateSuite Agent UI...'));
     console.log(chalk.gray(`Server: ${serverPath}`));
+    if (options.demo) {
+      console.log(chalk.cyan('Demo mode: enabled'));
+    }
     console.log(chalk.gray('Building UI...'));
     
     try {
@@ -604,10 +608,16 @@ program
       console.log(chalk.blue('\n🚀 Server starting on http://localhost:3001'));
       console.log(chalk.gray('Press Ctrl+C to stop'));
       
-      // Start server
+      // Start server with demo mode environment variable
       const { spawn } = require('child_process');
+      const env = {
+        ...process.env,
+        DEMO_MODE: options.demo ? 'true' : ''
+      };
+      
       const server = spawn('node', [serverPath], {
-        stdio: 'inherit'
+        stdio: 'inherit',
+        env
       });
       
       server.on('error', (err: Error) => {

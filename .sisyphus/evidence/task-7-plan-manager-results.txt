@@ -1,0 +1,25 @@
+PLAN MANAGER TEST RESULTS
+
+=====================================
+
+Test 1: Create Plan
+  ✅ PASS - Created plan: test-plan
+    Tasks found: 3
+    Task titles: Task 1: First task, Task 2: Second task, Task 3: Completed task (should be skipped)
+
+Test 2: Load Plan
+  ✅ PASS - Loaded plan: test-plan
+    Content length: 123
+    Tasks: 3
+
+Test 3: List Plans
+  ✅ PASS - Found 1 plan(s)
+    - test-plan ( 3 tasks)
+
+Test 4: Convert Plan to Tasks
+  ✅ PASS - Converted to 2 task(s)
+    Task IDs: [ 'cs-bnln9', 'cs-yxbcb' ]
+    Task titles: [ 'Task 1: First task', 'Task 2: Second task' ]
+    Skipped completed tasks: 1
+
+=====================================
