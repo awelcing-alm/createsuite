@@ -1,16 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
-import { styleReset, AppBar, Toolbar, Button, MenuList, MenuListItem, Separator } from 'react95';
-import original from 'react95/dist/themes/original';
-import ms_sans_serif from 'react95/dist/fonts/ms_sans_serif.woff2';
-import ms_sans_serif_bold from 'react95/dist/fonts/ms_sans_serif_bold.woff2';
+import React, { useState, useEffect, useCallback } from 'react';
+import styled, { createGlobalStyle } from 'styled-components';
 import { v4 as uuidv4 } from 'uuid';
 import TerminalWindow from './components/TerminalWindow';
 import ContentWindow from './components/ContentWindow';
 import GlobalMapWindow from './components/GlobalMapWindow';
 import type { GlobalMapAgent, GlobalMapMessage } from './components/GlobalMapWindow';
 import SystemMonitor from './components/SystemMonitor';
-import { Monitor, Terminal as TerminalIcon, Cpu } from 'lucide-react';
+import LifecycleNotification from './components/LifecycleNotification';
+import SetupWizard from './components/SetupWizard';
+import AgentDashboard from './components/AgentDashboard';
+import GaussianBackground from './components/GaussianBackground';
+import { macosTheme } from './theme/macos';
+import { 
+  Dock, 
+  DockItem, 
+  DockDivider, 
+  MenuBar, 
+  MenuBarItem, 
+  MenuBarRight,
+  Menu,
+  MenuItem,
+  MenuDivider
+} from './components/ui/MacOS';
+import { 
+  Monitor, 
+  Terminal as TerminalIcon, 
+  Cpu, 
+  Globe, 
+  Play,
+  Wifi, 
+  Battery,
+  Search
+} from 'lucide-react';
 
 // UI Command payload type
 export interface UiCommandPayload {
@@ -21,26 +42,28 @@ export interface UiCommandPayload {
 }
 
 const GlobalStyles = createGlobalStyle`
-  ${styleReset}
-  @font-face {
-    font-family: 'ms_sans_serif';
-    src: url('${ms_sans_serif}') format('woff2');
-    font-weight: 400;
-    font-style: normal;
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
-  @font-face {
-    font-family: 'ms_sans_serif';
-    src: url('${ms_sans_serif_bold}') format('woff2');
-    font-weight: bold;
-    font-style: normal;
-  }
-  body, input, select, textarea {
-    font-family: 'ms_sans_serif';
-  }
+  
   body {
-    background-color: #008080; /* Classic Windows Teal */
+    font-family: ${macosTheme.fonts.system};
+    background: ${macosTheme.colors.desktopBg};
     margin: 0;
     overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  input, select, textarea, button {
+    font-family: ${macosTheme.fonts.system};
+  }
+  
+  ::selection {
+    background: ${macosTheme.colors.accent};
+    color: white;
   }
 `;
 
@@ -49,15 +72,15 @@ const Desktop = styled.div`
   height: 100vh;
   position: relative;
   overflow: hidden;
+  padding-top: 28px; /* Space for menu bar */
+  padding-bottom: 80px; /* Space for dock */
 `;
 
-const TaskbarContainer = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 10000;
-`;
+const AppleLogo = () => (
+  <svg width="14" height="17" viewBox="0 0 14 17" fill="currentColor">
+    <path d="M13.1 12.2c-.3.6-.6 1.2-1 1.7-.6.7-1.1 1.2-1.6 1.4-.6.3-1.3.5-2 .5-.5 0-1.1-.1-1.7-.4-.6-.3-1.1-.4-1.6-.4s-1 .1-1.6.4c-.6.3-1.1.4-1.5.4-.7 0-1.4-.2-2-.5-.6-.3-1.1-.8-1.6-1.5-.5-.7-.9-1.5-1.2-2.4C.1 10.5 0 9.5 0 8.5c0-1.1.2-2 .7-2.9.4-.7.9-1.2 1.5-1.6.6-.4 1.3-.6 2-.6.5 0 1.2.2 2 .5.8.3 1.3.5 1.5.5.2 0 .7-.2 1.7-.5.9-.3 1.6-.4 2.2-.3 1.6.1 2.8.8 3.6 1.9-1.4.9-2.1 2.1-2.1 3.6 0 1.2.4 2.2 1.3 3 .4.4.8.7 1.3.9-.1.3-.2.5-.6.2zm-3-11.4c0 .9-.3 1.8-1 2.6-.8.9-1.7 1.5-2.7 1.4 0-.1 0-.2 0-.3 0-.9.4-1.8 1-2.5.3-.4.7-.7 1.2-1 .5-.3 1-.4 1.4-.5 0 .1.1.2.1.3z"/>
+  </svg>
+);
 
 interface BaseWindow {
   id: string;
@@ -73,12 +96,12 @@ interface TerminalState extends BaseWindow {
 
 interface ImageState extends BaseWindow {
   type: 'image';
-  content: string; // URL
+  content: string;
 }
 
 interface BrowserState extends BaseWindow {
   type: 'browser';
-  content: string; // URL
+  content: string;
 }
 
 interface GlobalMapState extends BaseWindow {
@@ -89,18 +112,40 @@ interface SystemMonitorState extends BaseWindow {
   type: 'system-monitor';
 }
 
-type WindowState = TerminalState | ImageState | BrowserState | GlobalMapState | SystemMonitorState;
+interface AgentDashboardState extends BaseWindow {
+  type: 'agent-dashboard';
+}
+
+type WindowState = TerminalState | ImageState | BrowserState | GlobalMapState | SystemMonitorState | AgentDashboardState;
+
+const isDemoRoute = () => {
+  const path = window.location.pathname;
+  return path === '/demo' || path === '/demo/';
+};
 
 const App: React.FC = () => {
   const [windows, setWindows] = useState<WindowState[]>([]);
-  const [startMenuOpen, setStartMenuOpen] = useState(false);
-  const [agentsMenuOpen, setAgentsMenuOpen] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [topZIndex, setTopZIndex] = useState(1);
   const [globalAgents, setGlobalAgents] = useState<GlobalMapAgent[]>([]);
   const [globalMessages, setGlobalMessages] = useState<GlobalMapMessage[]>([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  const [showWelcome, setShowWelcome] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('demo') === 'true' || params.get('skipWelcome') === 'true') return false;
+    if (isDemoRoute()) return false;
+    return !localStorage.getItem('createsuite-setup-complete');
+  });
+
+  // Update clock
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const spawnWindow = (
-    type: 'terminal' | 'image' | 'browser' | 'global-map' | 'system-monitor',
+    type: 'terminal' | 'image' | 'browser' | 'global-map' | 'system-monitor' | 'agent-dashboard',
     title: string,
     contentOrCommand?: string,
     customPosition?: { x: number, y: number }
@@ -116,19 +161,14 @@ const App: React.FC = () => {
       if (customPosition) {
         position = customPosition;
       } else {
-        const offset = prev.length * 20;
+        const offset = prev.length * 30;
         position = {
-          x: 50 + (offset % 300),
-          y: 50 + (offset % 300)
+          x: 80 + (offset % 300),
+          y: 60 + (offset % 200)
         };
       }
 
-      const base = {
-        id,
-        title: `${title}`,
-        zIndex: newZ,
-        position
-      };
+      const base = { id, title, zIndex: newZ, position };
 
       if (type === 'terminal') {
         return [...prev, { ...base, type: 'terminal', initialCommand: contentOrCommand }];
@@ -138,15 +178,16 @@ const App: React.FC = () => {
         return [...prev, { ...base, type: 'browser', content: contentOrCommand || '' }];
       } else if (type === 'system-monitor') {
         return [...prev, { ...base, type: 'system-monitor' }];
+      } else if (type === 'agent-dashboard') {
+        return [...prev, { ...base, type: 'agent-dashboard' }];
       }
       return [...prev, { ...base, type: 'global-map' }];
     });
 
-    setStartMenuOpen(false);
-    setAgentsMenuOpen(false);
+    setActiveMenu(null);
   };
 
-  const spawnTerminal = (title: string = 'OpenCode Terminal', command?: string, customPosition?: { x: number, y: number }) => {
+  const spawnTerminal = (title: string = 'Terminal', command?: string, customPosition?: { x: number, y: number }) => {
     spawnWindow('terminal', title, command, customPosition);
   };
 
@@ -165,169 +206,132 @@ const App: React.FC = () => {
   };
 
   const handleUiCommand = (payload: UiCommandPayload) => {
-    console.log('Received UI Command:', payload);
     if (!payload.type) return;
-
     if (payload.type === 'image') {
-      // Assuming payload.src is relative to workspace root
-      // We prepend /workspace/ to make it accessible via our static route
       const src = payload.src?.startsWith('http') ? payload.src : `/workspace/${payload.src}`;
-      spawnWindow('image', payload.title || 'Image Preview', src || '');
+      spawnWindow('image', payload.title || 'Preview', src || '');
     } else if (payload.type === 'browser') {
-      spawnWindow('browser', payload.title || 'Web Preview', payload.url);
+      spawnWindow('browser', payload.title || 'Browser', payload.url);
     }
   };
 
+  const runConvoyTest = useCallback(() => {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    
+    spawnTerminal('Z.ai Agent (GLM 4.7)', 'export OPENCODE_PROVIDER=zai-coding-plan OPENCODE_MODEL=glm-4.7; echo "Starting Z.ai GLM 4.7 Agent..."; opencode', { x: 20, y: 60 });
+    setTimeout(() => spawnTerminal('Asset Generator (HF)', 'export OPENCODE_PROVIDER=huggingface OPENCODE_MODEL=stable-diffusion-3.5-large; echo "Starting Asset Generator..."; opencode', { x: w - 620, y: 60 }), 200);
+    setTimeout(() => spawnTerminal('Sisyphus (Claude)', 'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; echo "Starting Sisyphus..."; opencode', { x: 20, y: h - 520 }), 400);
+    setTimeout(() => spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle..."; opencode', { x: w - 620, y: h - 520 }), 600);
+    setTimeout(() => spawnTerminal('Architect (Kimi-K2.5)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=kimi-k2.5; echo "Starting Architect..."; opencode', { x: w / 2 - 310, y: h / 2 - 200 }), 800);
+  }, []);
+
+  const handleWelcomeComplete = useCallback((config?: { providers: string[]; launchAgents: string[] }) => {
+    setShowWelcome(false);
+    const loading = document.getElementById('loading');
+    if (loading) loading.classList.add('hidden');
+    
+    if (config && config.launchAgents && config.launchAgents.length > 0) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      let delay = 0;
+      
+      config.launchAgents.forEach((agentId, index) => {
+        setTimeout(() => {
+          const col = index % 2;
+          const row = Math.floor(index / 2);
+          const position = {
+            x: col === 0 ? 20 : w - 620,
+            y: row === 0 ? 60 : h - 520
+          };
+          
+          switch (agentId) {
+            case 'terminal':
+              spawnTerminal('Terminal', undefined, position);
+              break;
+            case 'claude':
+              spawnTerminal('Sisyphus (Claude)', 
+                'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; echo "Starting Sisyphus..."; opencode',
+                position);
+              break;
+            case 'openai':
+              spawnTerminal('Oracle (OpenAI)',
+                'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle..."; opencode',
+                position);
+              break;
+            case 'gemini':
+              spawnTerminal('Engineer (Gemini)',
+                'export OPENCODE_PROVIDER=google OPENCODE_MODEL=gemini-3-pro; echo "Starting Engineer..."; opencode',
+                position);
+              break;
+          }
+        }, delay);
+        delay += 200;
+      });
+    }
+  }, []);
+  
+  const handleSetupSkip = useCallback(() => {
+    setShowWelcome(false);
+    const loading = document.getElementById('loading');
+    if (loading) loading.classList.add('hidden');
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        e.preventDefault();
+        spawnTerminal();
+      }
+      if (e.key === 'Escape') {
+        setActiveMenu(null);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Demo mode
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('demo') === 'true') {
+    if (params.get('demo') === 'true' || isDemoRoute()) {
       const w = window.innerWidth;
       const h = window.innerHeight;
       
-      // Top Left - Z.ai Coding Agent
-      spawnTerminal('Z.ai Agent (GLM 4.7)', 
-        'echo "╔══════════════════════════════════════════════════╗";' +
-        'echo "║  Z.ai Agent - GLM 4.7 Coding Specialist         ║";' +
-        'echo "╚══════════════════════════════════════════════════╝";' +
-        'echo "";' +
-        'echo "✓ Connected to oh-my-opencode provider";' +
-        'echo "✓ Model: glm-4.7 (coding-optimized)";' +
-        'echo "✓ Status: Processing task queue";' +
-        'echo "";' +
-        'echo "Current Tasks:";' +
-        'echo "  → cs-r6w71: Fix demo mode terminals";' +
-        'echo "  → cs-abc12: Add dark mode support";' +
-        'echo "  → cs-def34: Optimize agent routing";' +
-        'echo "";' +
-        'echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";' +
-        'echo "Working on: cs-r6w71 [████████████████░░░] 75%"' +
-        'echo "  → Analyzing terminal connection issues...";' +
-        'echo "  → Found: Socket.io server not responding";' +
-        'echo "  → Fix: Updating connection retry logic";' +
-        'echo ""',
-        { x: 20, y: 20 });
+      spawnTerminal('Z.ai Agent', 
+        'echo "╔══════════════════════════════════════════════════╗"; echo "║  Z.ai Agent - GLM 4.7 Coding Specialist         ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Connected to oh-my-opencode provider"; echo "✓ Model: glm-4.7 (coding-optimized)"; echo "✓ Status: Processing task queue"',
+        { x: 20, y: 60 });
       
-      // Top Right - Asset Generator  
-      setTimeout(() => spawnTerminal('Asset Generator (HF)',
-        'echo "╔══════════════════════════════════════════════════╗";' +
-        'echo "║  Hugging Face Asset Generator                   ║";' +
-        'echo "╚══════════════════════════════════════════════════╝";' +
-        'echo "";' +
-        'echo "✓ Provider: huggingface-inference";' +
-        'echo "✓ Model: stable-diffusion-3.5-large";' +
-        'echo "✓ Status: Generating assets";' +
-        'echo "";' +
-        'echo "Recent Generations:";' +
-        'echo "  → agent-sprite-001.png [DONE]";' +
-        'echo "  → hero-background.jpg [DONE]";' +
-        'echo "  → icon-pack-v2.zip [PROCESSING]";' +
-        'echo "";' +
-        'echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";' +
-        'echo "Generating: icon-pack-v2.zip";' +
-        'echo "  → Icons: [███████████████░░] 85%";' +
-        'echo "  → Sprites: [████████████░░░░] 70%";' +
-        'echo "  → Export: [███████████░░░░░░] 60%";',
-        { x: w - 620, y: 20 }), 200);
+      setTimeout(() => spawnTerminal('Asset Generator',
+        'echo "╔══════════════════════════════════════════════════╗"; echo "║  Hugging Face Asset Generator                   ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Provider: huggingface-inference"; echo "✓ Model: stable-diffusion-3.5-large"; echo "✓ Status: Generating assets"',
+        { x: w - 620, y: 60 }), 200);
       
-      // Bottom Left - Sisyphus (Task Automation)
       setTimeout(() => spawnTerminal('Sisyphus (Claude)',
-        'echo "╔══════════════════════════════════════════════════╗";' +
-        'echo "║  Sisyphus - Task Automation Agent              ║";' +
-        'echo "╚══════════════════════════════════════════════════╝";' +
-        'echo "";' +
-        'echo "✓ Provider: anthropic";' +
-        'echo "✓ Model: claude-opus-4.5";' +
-        'echo "✓ Status: Executing plan";' +
-        'echo "";' +
-        'echo "Active Convoys:";' +
-        'echo "  → agent-team-ux: 7/7 tasks complete";' +
-        'echo "  → dark-mode-rollout: 3/8 tasks";' +
-        'echo "  → api-refactor: 1/12 tasks";' +
-        'echo "";' +
-        'echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";' +
-        'echo "Executing: agent-team-ux";' +
-        'echo "  ✓ Task 1: Demo script written";' +
-        'echo "  ✓ Task 2: Storage schema designed";' +
-        'echo "  ✓ Task 3: Entry point CLI built";' +
-        'echo "  ✓ Task 4: PlanManager bridge completed";' +
-        'echo "  ✓ Task 5: Desktop single-process fixed";' +
-        'echo "  ✓ Task 6: Smart Router implemented";' +
-        'echo "  ✓ Task 7: Integration tests passing";' +
-        'echo "";' +
-        'echo "🎉 ALL 18 ACCEPTANCE CRITERIA COMPLETE! 🎉";',
-        { x: 20, y: h - 480 }), 400);
+        'echo "╔══════════════════════════════════════════════════╗"; echo "║  Sisyphus - Task Automation Agent              ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Provider: anthropic"; echo "✓ Model: claude-opus-4.5"; echo "✓ Status: Executing plan"',
+        { x: 20, y: h - 520 }), 400);
       
-      // Bottom Right - Oracle (Architecture)
       setTimeout(() => spawnTerminal('Oracle (OpenAI)',
-        'echo "╔══════════════════════════════════════════════════╗";' +
-        'echo "║  Oracle - System Architecture Advisor           ║";' +
-        'echo "╚══════════════════════════════════════════════════╝";' +
-        'echo "";' +
-        'echo "✓ Provider: openai";' +
-        'echo "✓ Model: gpt-5.2";' +
-        'echo "✓ Status: Analyzing codebase";' +
-        'echo "";' +
-        'echo "Architecture Insights:";' +
-        'echo "  → Storage: Unified .createsuite/ schema";' +
-        'echo "  → Routing: 4-tier complexity model";' +
-        'echo "  → Agents: 5 specialized personas";' +
-        'echo "  → Integration: 6 test scenarios passing";' +
-        'echo "";' +
-        'echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";' +
-        'echo "Recommendations:";' +
-        'echo "  1. Add WebSocket for real-time updates";' +
-        'echo "  2. Implement agent handoff protocol";' +
-        'echo "  3. Add Prometheus metrics dashboard";' +
-        'echo "  4. Consider caching layer for tasks";' +
-        'echo "";' +
-        'echo "Code Health: 🟢 EXCELLENT";' +
-        'echo "  → 0 TypeScript errors";' +
-        'echo "  → 6/6 integration tests passing";' +
-        'echo "  → All acceptance criteria met";',
-        { x: w - 620, y: h - 480 }), 600);
+        'echo "╔══════════════════════════════════════════════════╗"; echo "║  Oracle - System Architecture Advisor           ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Provider: openai"; echo "✓ Model: gpt-5.2"; echo "✓ Status: Analyzing codebase"',
+        { x: w - 620, y: h - 520 }), 600);
       
-      // Center - Architect (Deep Design)
-      setTimeout(() => spawnTerminal('Architect (Kimi-K2.5)',
-        'echo "╔══════════════════════════════════════════════════╗";' +
-        'echo "║  Architect - Deep System Design Specialist     ║";' +
-        'echo "╚══════════════════════════════════════════════════╝";' +
-        'echo "";' +
-        'echo "✓ Provider: openai";' +
-        'echo "✓ Model: kimi-k2.5";' +
-        'echo "✓ Status: Designing Phase 2 features";' +
-        'echo "";' +
-        'echo "Phase 2 Roadmap:";' +
-        'echo "  → Multi-agent orchestration";' +
-        'echo "  → Real-time collaboration";' +
-        'echo "  → Custom agent frames";' +
-        'echo "  → Enterprise deployment";' +
-        'echo "";' +
-        'echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";' +
-        'echo "System Design Document:";' +
-        'echo "  ✓ Architecture: Layered microservice";' +
-        'echo "  ✓ Data Model: Unified storage schema";' +
-        'echo "  ✓ API Design: REST + WebSocket";' +
-        'echo "  ✓ Security: OAuth + provider auth";' +
-        'echo "  ✓ Scale: Horizontal agent scaling";' +
-        'echo "";' +
-        'echo "📐 Design Score: 94/100 ⭐";',
-        { x: w / 2 - 310, y: h / 2 - 240 }), 800);
+      setTimeout(() => spawnTerminal('Architect',
+        'echo "╔══════════════════════════════════════════════════╗"; echo "║  Architect - Deep System Design Specialist     ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Provider: openai"; echo "✓ Model: kimi-k2.5"; echo "✓ Status: Designing Phase 2"',
+        { x: w / 2 - 310, y: h / 2 - 200 }), 800);
     }
   }, []);
 
+  // Fetch agent data
   useEffect(() => {
     let isMounted = true;
 
     const mapStatus = (status: string): GlobalMapAgent['status'] => {
       switch (status) {
-        case 'working':
-          return 'working';
-        case 'error':
-          return 'error';
-        case 'offline':
-          return 'offline';
-        default:
-          return 'idle';
+        case 'working': return 'working';
+        case 'error': return 'error';
+        case 'offline': return 'offline';
+        default: return 'idle';
       }
     };
 
@@ -345,7 +349,7 @@ const App: React.FC = () => {
 
         if (!isMounted) return;
 
-        const agents = (agentsPayload.data || []).map((agent: any, index: number) => ({
+        const agents = (agentsPayload.data || []).map((agent: { id: string; name: string; status: string; capabilities?: string[] }, index: number) => ({
           id: agent.id,
           name: agent.name,
           status: mapStatus(agent.status),
@@ -356,7 +360,7 @@ const App: React.FC = () => {
           }
         }));
 
-        const messages = (mailboxPayload.data || []).map((message: any) => ({
+        const messages = (mailboxPayload.data || []).map((message: { id: string; from: string; to: string; kind?: string; subject: string; body: string; timestamp: string; read: boolean }) => ({
           id: message.id,
           from: message.from,
           to: message.to,
@@ -371,8 +375,8 @@ const App: React.FC = () => {
 
         setGlobalAgents(agents);
         setGlobalMessages(messages);
-      } catch (error) {
-        // fail silent; fallback UI handles missing data
+      } catch {
+        // Silent fail
       }
     };
 
@@ -381,14 +385,151 @@ const App: React.FC = () => {
 
     return () => {
       isMounted = false;
-      window.clearInterval(interval);
+      clearInterval(interval);
     };
   }, []);
 
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
   return (
-    <ThemeProvider theme={original}>
+    <>
       <GlobalStyles />
+      <GaussianBackground />
+      
+      {/* macOS Menu Bar */}
+      <MenuBar>
+        <MenuBarItem $bold onClick={() => setActiveMenu(activeMenu === 'apple' ? null : 'apple')}>
+          <AppleLogo />
+        </MenuBarItem>
+        <MenuBarItem $bold>CreateSuite</MenuBarItem>
+        <MenuBarItem onClick={() => setActiveMenu(activeMenu === 'file' ? null : 'file')}>
+          File
+        </MenuBarItem>
+        <MenuBarItem onClick={() => setActiveMenu(activeMenu === 'agents' ? null : 'agents')}>
+          Agents
+        </MenuBarItem>
+        <MenuBarItem onClick={() => setActiveMenu(activeMenu === 'view' ? null : 'view')}>
+          View
+        </MenuBarItem>
+        <MenuBarItem onClick={() => setActiveMenu(activeMenu === 'window' ? null : 'window')}>
+          Window
+        </MenuBarItem>
+        <MenuBarItem>Help</MenuBarItem>
+        
+        <MenuBarRight>
+          <Wifi size={16} />
+          <Battery size={16} />
+          <Search size={16} />
+          <span>{formatDate(currentTime)}</span>
+          <span style={{ fontWeight: 500 }}>{formatTime(currentTime)}</span>
+        </MenuBarRight>
+      </MenuBar>
+
+      {/* Dropdown Menus */}
+      {activeMenu === 'file' && (
+        <Menu style={{ position: 'fixed', top: 28, left: 140, zIndex: 100000 }}>
+          <MenuItem onClick={() => { spawnTerminal(); setActiveMenu(null); }}>
+            <TerminalIcon size={16} /> New Terminal
+          </MenuItem>
+          <MenuDivider />
+          <MenuItem onClick={() => { spawnWindow('system-monitor', 'Activity Monitor'); setActiveMenu(null); }}>
+            <Monitor size={16} /> Activity Monitor
+          </MenuItem>
+        </Menu>
+      )}
+
+      {activeMenu === 'agents' && (
+        <Menu style={{ position: 'fixed', top: 28, left: 180, zIndex: 100000 }}>
+          <MenuItem onClick={() => { spawnWindow('agent-dashboard', '🤖 Agent Dashboard'); setActiveMenu(null); }}>
+            <Cpu size={16} /> Agent Dashboard
+          </MenuItem>
+          <MenuDivider />
+          <MenuItem onClick={() => { spawnTerminal('Sisyphus (Claude)', 'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; opencode'); setActiveMenu(null); }}>
+            <Cpu size={16} /> Sisyphus (Claude)
+          </MenuItem>
+          <MenuItem onClick={() => { spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; opencode'); setActiveMenu(null); }}>
+            <Cpu size={16} /> Oracle (OpenAI)
+          </MenuItem>
+          <MenuItem onClick={() => { spawnTerminal('Engineer (Gemini)', 'export OPENCODE_PROVIDER=google OPENCODE_MODEL=gemini-3-pro; opencode'); setActiveMenu(null); }}>
+            <Cpu size={16} /> Engineer (Gemini)
+          </MenuItem>
+          <MenuItem onClick={() => { spawnTerminal('Architect (Kimi)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=kimi-k2.5; opencode'); setActiveMenu(null); }}>
+            <Cpu size={16} /> Architect (Kimi)
+          </MenuItem>
+          <MenuDivider />
+          <MenuItem onClick={() => { spawnGlobalMap(); setActiveMenu(null); }}>
+            <Globe size={16} /> Agent Village
+          </MenuItem>
+          <MenuDivider />
+          <MenuItem onClick={() => { runConvoyTest(); setActiveMenu(null); }}>
+            <Play size={16} /> Launch All Agents
+          </MenuItem>
+        </Menu>
+      )}
+
+      {activeMenu === 'view' && (
+        <Menu style={{ position: 'fixed', top: 28, left: 240, zIndex: 100000 }}>
+          <MenuItem onClick={() => { spawnGlobalMap(); setActiveMenu(null); }}>
+            <Globe size={16} /> Agent Village
+          </MenuItem>
+          <MenuItem onClick={() => { spawnWindow('system-monitor', 'Activity Monitor'); setActiveMenu(null); }}>
+            <Monitor size={16} /> Activity Monitor
+          </MenuItem>
+        </Menu>
+      )}
+
+      {activeMenu === 'window' && (
+        <Menu style={{ position: 'fixed', top: 28, left: 295, zIndex: 100000 }}>
+          <MenuItem disabled={windows.length === 0}>Minimize</MenuItem>
+          <MenuItem disabled={windows.length === 0}>Zoom</MenuItem>
+          <MenuDivider />
+          {windows.map(win => (
+            <MenuItem key={win.id} onClick={() => { focusWindow(win.id); setActiveMenu(null); }}>
+              {win.title}
+            </MenuItem>
+          ))}
+          {windows.length === 0 && <MenuItem disabled>No windows open</MenuItem>}
+        </Menu>
+      )}
+
+      {/* Click to close menus */}
+      {activeMenu && (
+        <div 
+          style={{ position: 'fixed', inset: 0, zIndex: 99998 }} 
+          onClick={() => setActiveMenu(null)}
+        />
+      )}
+
       <Desktop>
+        {/* Setup Wizard */}
+        {showWelcome && (
+          <SetupWizard 
+            onComplete={handleWelcomeComplete}
+            onSkip={handleSetupSkip}
+          />
+        )}
+        
+        {/* Lifecycle Notification */}
+        <LifecycleNotification 
+          onKeepWorking={() => console.log('Keep working')}
+          onViewResults={() => console.log('View results')}
+        />
+        
+        {/* Windows */}
         {windows.map(win => {
           if (win.type === 'terminal') {
             return (
@@ -396,217 +537,200 @@ const App: React.FC = () => {
                 key={win.id}
                 id={win.id}
                 title={win.title}
-                zIndex={win.zIndex}
                 initialPosition={win.position}
-                onClose={closeWindow}
-                onFocus={focusWindow}
-                initialCommand={win.initialCommand}
+                zIndex={win.zIndex}
+                onClose={() => closeWindow(win.id)}
+                onFocus={() => focusWindow(win.id)}
                 onUiCommand={handleUiCommand}
+                initialCommand={win.initialCommand}
               />
             );
-          } else if (win.type === 'global-map') {
+          }
+          if (win.type === 'image') {
+            return (
+              <ContentWindow
+                key={win.id}
+                id={win.id}
+                title={win.title}
+                type="image"
+                content={win.content}
+                initialPosition={win.position}
+                zIndex={win.zIndex}
+                onClose={() => closeWindow(win.id)}
+                onFocus={() => focusWindow(win.id)}
+              />
+            );
+          }
+          if (win.type === 'browser') {
+            return (
+              <ContentWindow
+                key={win.id}
+                id={win.id}
+                title={win.title}
+                type="browser"
+                content={win.content}
+                initialPosition={win.position}
+                zIndex={win.zIndex}
+                onClose={() => closeWindow(win.id)}
+                onFocus={() => focusWindow(win.id)}
+              />
+            );
+          }
+          if (win.type === 'global-map') {
             return (
               <GlobalMapWindow
                 key={win.id}
                 id={win.id}
                 title={win.title}
-                zIndex={win.zIndex}
                 initialPosition={win.position}
-                onClose={closeWindow}
-                onFocus={focusWindow}
+                zIndex={win.zIndex}
+                onClose={() => closeWindow(win.id)}
+                onFocus={() => focusWindow(win.id)}
                 agents={globalAgents}
                 messages={globalMessages}
               />
             );
-          } else if (win.type === 'system-monitor') {
+          }
+          if (win.type === 'system-monitor') {
             return (
               <SystemMonitor
                 key={win.id}
                 id={win.id}
-                zIndex={win.zIndex}
+                title={win.title}
                 initialPosition={win.position}
-                onClose={closeWindow}
-                onFocus={focusWindow}
+                zIndex={win.zIndex}
+                onClose={() => closeWindow(win.id)}
+                onFocus={() => focusWindow(win.id)}
               />
             );
-          } else {
+          }
+          if (win.type === 'agent-dashboard') {
             return (
-               <ContentWindow
-                 key={win.id}
-                 id={win.id}
-                 title={win.title}
-                 type={win.type}
-                 content={win.content}
-                 zIndex={win.zIndex}
-                 initialPosition={win.position}
-                 onClose={closeWindow}
-                 onFocus={focusWindow}
-                />
+              <AgentDashboard
+                key={win.id}
+                id={win.id}
+                title={win.title}
+                initialPosition={win.position}
+                zIndex={win.zIndex}
+                onClose={() => closeWindow(win.id)}
+                onFocus={() => focusWindow(win.id)}
+                serverUrl={window.location.origin}
+              />
             );
           }
+          return null;
         })}
-
-        <TaskbarContainer>
-          <AppBar style={{ position: 'static', top: 'auto', bottom: 0 }}>
-            <Toolbar style={{ justifyContent: 'space-between' }}>
-              <div style={{ position: 'relative', display: 'inline-block' }}>
-                <Button 
-                  onClick={() => setStartMenuOpen(!startMenuOpen)} 
-                  active={startMenuOpen} 
-                  style={{ fontWeight: 'bold' }}
-                >
-                  <img
-                    src="https://win98icons.alexmeub.com/icons/png/windows-0.png"
-                    alt="logo"
-                    style={{ height: '20px', marginRight: 4 }}
-                  />
-                  Start
-                </Button>
-                {startMenuOpen && (
-                  <MenuList 
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      bottom: '100%',
-                      zIndex: 10001
-                    }}
-                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  >
-                    <MenuListItem onClick={() => setAgentsMenuOpen(!agentsMenuOpen)}>
-                      <Cpu size={16} style={{ marginRight: 8 }} />
-                      Agents
-                      <span style={{ marginLeft: 'auto' }}>▶</span>
-                      {agentsMenuOpen && (
-                        <MenuList
-                          style={{
-                            position: 'absolute',
-                            left: '100%',
-                            bottom: '0',
-                            zIndex: 10002
-                          }}
-                        >
-                          <MenuListItem onClick={() => spawnTerminal('Z.ai Agent (GLM 4.7)', 'export OPENCODE_PROVIDER=zai-coding-plan OPENCODE_MODEL=glm-4.7; echo "Starting Z.ai GLM 4.7 Agent..."; opencode')}>
-                            <img
-                              src="https://win98icons.alexmeub.com/icons/png/network_internet_pcs_installer-0.png"
-                              alt="zai"
-                              style={{ height: '16px', marginRight: 8 }}
-                            />
-                            Z.ai GLM 4.7
-                          </MenuListItem>
-                          <MenuListItem onClick={() => spawnTerminal('Asset Generator (HF)', 'export OPENCODE_PROVIDER=huggingface OPENCODE_MODEL=stable-diffusion-3.5-large; echo "Starting Asset Generator (Hugging Face)..."; opencode')}>
-                            <img
-                              src="https://win98icons.alexmeub.com/icons/png/paint_file-2.png"
-                              alt="hf"
-                              style={{ height: '16px', marginRight: 8 }}
-                            />
-                            Asset Generator
-                          </MenuListItem>
-                          <MenuListItem onClick={() => spawnTerminal('Sisyphus (Claude)', 'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; echo "Starting Sisyphus (Claude)..."; opencode')}>
-                            <img
-                              src="https://win98icons.alexmeub.com/icons/png/msg_information-0.png"
-                              alt="claude"
-                              style={{ height: '16px', marginRight: 8 }}
-                            />
-                            Sisyphus (Claude)
-                          </MenuListItem>
-                          <MenuListItem onClick={() => spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle (OpenAI)..."; opencode')}>
-                            <img
-                              src="https://win98icons.alexmeub.com/icons/png/help_book_big-0.png"
-                              alt="openai"
-                              style={{ height: '16px', marginRight: 8 }}
-                            />
-                            Oracle (OpenAI)
-                          </MenuListItem>
-                          <MenuListItem onClick={() => spawnTerminal('Architect (Kimi-K2.5)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=kimi-k2.5; echo "Starting Architect (Kimi-K2.5) - Deep System Design Specialist..."; opencode')}>
-                            <img
-                              src="https://win98icons.alexmeub.com/icons/png/building-0.png"
-                              alt="architect"
-                              style={{ height: '16px', marginRight: 8 }}
-                            />
-                            Architect (Kimi-K2.5)
-                          </MenuListItem>
-                        </MenuList>
-                      )}
-                    </MenuListItem>
-                    <Separator />
-                    <MenuListItem onClick={spawnGlobalMap}>
-                      <img
-                        src="https://win98icons.alexmeub.com/icons/png/world-2.png"
-                        alt="map"
-                        style={{ height: '16px', marginRight: 8 }}
-                      />
-                      Agent Village
-                    </MenuListItem>
-                    <Separator />
-                    <MenuListItem onClick={() => {
-                      const w = window.innerWidth;
-                      const h = window.innerHeight;
-                      
-                      // Top Left
-                      spawnTerminal('Z.ai Agent (GLM 4.7)', 'export OPENCODE_PROVIDER=zai-coding-plan OPENCODE_MODEL=glm-4.7; echo "Starting Z.ai GLM 4.7 Agent..."; opencode', { x: 20, y: 20 });
-                      
-                      // Top Right
-                      setTimeout(() => spawnTerminal('Asset Generator (HF)', 'export OPENCODE_PROVIDER=huggingface OPENCODE_MODEL=stable-diffusion-3.5-large; echo "Starting Asset Generator (Hugging Face)..."; opencode', { x: w - 620, y: 20 }), 200);
-                      
-                      // Bottom Left
-                      setTimeout(() => spawnTerminal('Sisyphus (Claude)', 'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; echo "Starting Sisyphus (Claude)..."; opencode', { x: 20, y: h - 480 }), 400);
-                      
-                      // Bottom Right
-                      setTimeout(() => spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle (OpenAI)..."; opencode', { x: w - 620, y: h - 480 }), 600);
-                      
-                      setTimeout(() => spawnTerminal('Architect (Kimi-K2.5)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=kimi-k2.5; echo "Starting Architect (Kimi-K2.5) - Deep System Design Specialist..."; opencode', { x: w / 2 - 310, y: h / 2 - 240 }), 800);
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <img
-                          src="https://win98icons.alexmeub.com/icons/png/briefcase-2.png"
-                          alt="test"
-                          style={{ height: '16px', marginRight: 8 }}
-                        />
-                        Convoy Delivery Test
-                      </div>
-                    </MenuListItem>
-                    <MenuListItem onClick={() => spawnTerminal()}>
-                      <TerminalIcon size={16} style={{ marginRight: 8 }} />
-                      New Terminal
-                    </MenuListItem>
-                    <Separator />
-                    <MenuListItem onClick={() => spawnWindow('system-monitor', 'System Monitor')}>
-                      <Monitor size={16} style={{ marginRight: 8 }} />
-                      System Monitor
-                    </MenuListItem>
-                  </MenuList>
-                )}
-              </div>
-              
-              {/* Taskbar Items */}
-              <div style={{ flex: 1, display: 'flex', marginLeft: 10, overflowX: 'auto' }}>
-                   {windows.map(win => (
-                    <Button
-                     key={win.id}
-                     active={win.zIndex === topZIndex}
-                     onClick={() => focusWindow(win.id)}
-                     style={{ marginRight: 4, minWidth: 100, textAlign: 'left', display: 'flex', alignItems: 'center' }}
-                     >
-                       {win.type === 'terminal' && <img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" alt="term" style={{ height: '16px', marginRight: 4 }} />}
-                       {win.type === 'image' && <img src="https://win98icons.alexmeub.com/icons/png/paint_file-2.png" alt="img" style={{ height: '16px', marginRight: 4 }} />}
-                       {win.type === 'browser' && <img src="https://win98icons.alexmeub.com/icons/png/msie1-0.png" alt="web" style={{ height: '16px', marginRight: 4 }} />}
-                       {win.type === 'global-map' && <img src="https://win98icons.alexmeub.com/icons/png/world-2.png" alt="map" style={{ height: '16px', marginRight: 4 }} />}
-                       {win.type === 'system-monitor' && <img src="https://win98icons.alexmeub.com/icons/png/monitor-0.png" alt="monitor" style={{ height: '16px', marginRight: 4 }} />}
-                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {win.title}
-                      </span>
-                     </Button>
-                  ))}
-              </div>
-
-              <div style={{ paddingRight: 6 }}>
-                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </div>
-            </Toolbar>
-          </AppBar>
-        </TaskbarContainer>
       </Desktop>
-    </ThemeProvider>
+
+      {/* macOS Dock */}
+      <Dock>
+        <DockItem 
+          title="Finder"
+          onClick={() => {}}
+        >
+          <svg viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="7" fill="url(#finder)"/>
+            <path d="M10 24c-2 0-3-1-3-3V11c0-2 1-3 3-3h12c2 0 3 1 3 3v10c0 2-1 3-3 3H10z" fill="#39C"/>
+            <path d="M10 8h12c2 0 3 1 3 3v2H7v-2c0-2 1-3 3-3z" fill="#6CF"/>
+            <circle cx="11" cy="18" r="2" fill="#FFF"/>
+            <circle cx="21" cy="18" r="2" fill="#FFF"/>
+            <defs>
+              <linearGradient id="finder" x1="0" y1="0" x2="32" y2="32">
+                <stop stopColor="#70D6FF"/>
+                <stop offset="1" stopColor="#0096FF"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </DockItem>
+        
+        <DockItem 
+          $active={windows.some(w => w.type === 'terminal')}
+          title="Terminal"
+          onClick={() => spawnTerminal()}
+        >
+          <svg viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="7" fill="#1E1E1E"/>
+            <path d="M8 10l5 5-5 5" stroke="#FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M14 20h10" stroke="#FFF" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </DockItem>
+        
+        <DockItem 
+          title="Sisyphus"
+          onClick={() => spawnTerminal('Sisyphus (Claude)', 'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; opencode')}
+        >
+          <svg viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="7" fill="#7c3aed"/>
+            <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">S</text>
+          </svg>
+        </DockItem>
+        
+        <DockItem 
+          title="Oracle"
+          onClick={() => spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; opencode')}
+        >
+          <svg viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="7" fill="#10a37f"/>
+            <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">O</text>
+          </svg>
+        </DockItem>
+        
+        <DockItem 
+          title="Engineer"
+          onClick={() => spawnTerminal('Engineer (Gemini)', 'export OPENCODE_PROVIDER=google OPENCODE_MODEL=gemini-3-pro; opencode')}
+        >
+          <svg viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="7" fill="#4285f4"/>
+            <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">E</text>
+          </svg>
+        </DockItem>
+        
+        <DockDivider />
+        
+        <DockItem 
+          $active={windows.some(w => w.type === 'global-map')}
+          title="Agent Village"
+          onClick={spawnGlobalMap}
+        >
+          <svg viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="7" fill="url(#globe)"/>
+            <circle cx="16" cy="16" r="10" stroke="white" strokeWidth="1.5" fill="none"/>
+            <ellipse cx="16" cy="16" rx="4" ry="10" stroke="white" strokeWidth="1.5" fill="none"/>
+            <path d="M6 16h20M16 6v20" stroke="white" strokeWidth="1.5"/>
+            <defs>
+              <linearGradient id="globe" x1="0" y1="0" x2="32" y2="32">
+                <stop stopColor="#FF6B6B"/>
+                <stop offset="1" stopColor="#4ECDC4"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </DockItem>
+        
+        <DockItem 
+          $active={windows.some(w => w.type === 'system-monitor')}
+          title="Activity Monitor"
+          onClick={() => spawnWindow('system-monitor', 'Activity Monitor')}
+        >
+          <svg viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="7" fill="#333"/>
+            <path d="M6 20l5-8 4 5 6-10 5 13" stroke="#00FF00" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </DockItem>
+        
+        <DockDivider />
+        
+        <DockItem 
+          title="Settings"
+          onClick={() => { localStorage.removeItem('createsuite-setup-complete'); setShowWelcome(true); }}
+        >
+          <svg viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="7" fill="#636366"/>
+            <circle cx="16" cy="16" r="6" stroke="white" strokeWidth="2" fill="none"/>
+            <path d="M16 6v4M16 22v4M6 16h4M22 16h4M9 9l3 3M20 20l3 3M9 23l3-3M20 12l3-3" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </DockItem>
+      </Dock>
+    </>
   );
 };
 

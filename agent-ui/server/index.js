@@ -10,6 +10,8 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { generateAllSprites } = require('./spriteGenerator');
+const { LifecycleManager } = require('./lifecycleManager');
+const { AgentSpawner, GitAgentSpawner, AGENT_CONFIGS } = require('./agentSpawner');
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -71,6 +73,19 @@ const io = new Server(server, {
     origin: corsOrigin,
     methods: ['GET', 'POST']
   }
+});
+
+// Initialize lifecycle manager for intelligent container management
+const lifecycle = new LifecycleManager(io, server);
+lifecycle.setupSignalHandlers();
+
+// Initialize agent spawner for dynamic Fly.io machine spawning
+const agentSpawner = new AgentSpawner(io);
+const gitAgentSpawner = new GitAgentSpawner(io);
+
+// Cleanup agents on shutdown
+process.on('SIGTERM', async () => {
+  await agentSpawner.cleanup();
 });
 
 if (apiToken) {
@@ -363,6 +378,323 @@ function getProviderDisplayName(provider) {
   return names[provider] || provider;
 }
 
+// ==================== HEALTH CHECK ENDPOINT ====================
+
+// GET /api/health - Health check for Fly.io and monitoring
+app.get('/api/health', (req, res) => {
+  const status = lifecycle.getStatus();
+  res.json({
+    status: 'ok',
+    timestamp: Date.now(),
+    uptime: status.uptime,
+    uptimeFormatted: status.uptimeFormatted,
+    sessionCount: status.sessionCount,
+    lifecycleStatus: status.status,
+    memoryUsage: process.memoryUsage(),
+    version: process.env.npm_package_version || '1.0.0'
+  });
+});
+
+// ==================== LIFECYCLE CONTROL API ====================
+
+// GET /api/lifecycle/status - Get detailed lifecycle status
+app.get('/api/lifecycle/status', (req, res) => {
+  res.json({ success: true, data: lifecycle.getStatus() });
+});
+
+// POST /api/lifecycle/hold - Keep container alive (prevent auto-shutdown)
+app.post('/api/lifecycle/hold', (req, res) => {
+  try {
+    const { durationMinutes = 60, reason = 'Agent requested hold' } = req.body;
+    const durationMs = durationMinutes * 60 * 1000;
+    
+    const result = lifecycle.hold(durationMs, reason);
+    
+    res.json({
+      success: true,
+      message: `Container held until ${new Date(result.holdUntil).toISOString()}`,
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/lifecycle/release - Release hold early
+app.post('/api/lifecycle/release', (req, res) => {
+  try {
+    const released = lifecycle.releaseHold();
+    
+    if (released) {
+      res.json({ success: true, message: 'Hold released' });
+    } else {
+      res.json({ success: false, message: 'Container was not being held' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/lifecycle/extend - Extend grace period
+app.post('/api/lifecycle/extend', (req, res) => {
+  try {
+    const { additionalMinutes = 15 } = req.body;
+    const additionalMs = additionalMinutes * 60 * 1000;
+    
+    const result = lifecycle.extendGracePeriod(additionalMs);
+    
+    res.json({
+      success: result.success,
+      message: result.success 
+        ? `Grace period extended by ${additionalMinutes} minutes`
+        : result.reason,
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/lifecycle/shutdown - Request graceful shutdown
+app.post('/api/lifecycle/shutdown', (req, res) => {
+  try {
+    const { force = false, reason = 'Agent requested shutdown' } = req.body;
+    
+    res.json({ 
+      success: true, 
+      message: force ? 'Force shutdown initiated' : 'Graceful shutdown initiated'
+    });
+    
+    // Execute after response
+    setImmediate(() => {
+      if (force) {
+        lifecycle.forceShutdown(reason);
+      } else {
+        lifecycle.gracefulShutdown(reason);
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/lifecycle/restart - Request container restart
+app.post('/api/lifecycle/restart', (req, res) => {
+  try {
+    const { reason = 'Agent requested restart' } = req.body;
+    
+    res.json({ success: true, message: 'Restart initiated' });
+    
+    // Execute after response
+    setImmediate(() => {
+      lifecycle.restart(reason);
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/lifecycle/rebuild - Request container rebuild and redeploy
+app.post('/api/lifecycle/rebuild', (req, res) => {
+  try {
+    const { 
+      branch = 'main', 
+      commitSha = null, 
+      reason = 'Agent requested rebuild' 
+    } = req.body;
+    
+    res.json({ 
+      success: true, 
+      message: `Rebuild initiated from branch: ${branch}`,
+      data: { branch, commitSha, reason }
+    });
+    
+    // Execute after response
+    setImmediate(() => {
+      lifecycle.rebuild({ branch, commitSha, reason });
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/lifecycle/sessions - Get active terminal sessions
+app.get('/api/lifecycle/sessions', (req, res) => {
+  res.json({ success: true, data: lifecycle.getSessions() });
+});
+
+// POST /api/lifecycle/webhook/test - Test webhook notification
+app.post('/api/lifecycle/webhook/test', async (req, res) => {
+  try {
+    const { event = 'test', data = {} } = req.body;
+    await lifecycle.sendWebhook(event, { 
+      ...data, 
+      test: true, 
+      message: 'This is a test notification from CreateSuite' 
+    });
+    res.json({ success: true, message: 'Webhook test sent' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/lifecycle/notify - Send custom notification
+app.post('/api/lifecycle/notify', async (req, res) => {
+  try {
+    const { event, message, resultsUrl } = req.body;
+    if (!event || !message) {
+      return res.status(400).json({ success: false, error: 'event and message required' });
+    }
+    
+    await lifecycle.sendWebhook(event, { reason: message, resultsUrl });
+    
+    // Also emit to connected clients
+    lifecycle.io.emit(`lifecycle:${event}`, { message, resultsUrl });
+    
+    res.json({ success: true, message: 'Notification sent' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ==================== AGENT SPAWNING API ====================
+
+// GET /api/agents/configs - Get available agent configurations
+app.get('/api/agents/configs', (req, res) => {
+  res.json({ 
+    success: true, 
+    data: agentSpawner.getAgentConfigs(),
+    flyEnabled: !!process.env.FLY_API_TOKEN
+  });
+});
+
+// GET /api/agents/active - List currently running agents
+app.get('/api/agents/active', (req, res) => {
+  res.json({ 
+    success: true, 
+    data: agentSpawner.getActiveAgents()
+  });
+});
+
+// POST /api/agents/spawn - Spawn a new agent machine
+app.post('/api/agents/spawn', async (req, res) => {
+  try {
+    const { agentType, apiKey, options = {} } = req.body;
+    
+    if (!agentType) {
+      return res.status(400).json({ success: false, error: 'agentType required' });
+    }
+    
+    // Get API key from request or from stored credentials
+    let effectiveApiKey = apiKey;
+    if (!effectiveApiKey) {
+      const credPath = path.join(process.cwd(), '.createsuite', 'provider-credentials.json');
+      if (fs.existsSync(credPath)) {
+        try {
+          const creds = JSON.parse(fs.readFileSync(credPath, 'utf-8'));
+          const providerMapping = {
+            claude: 'anthropic',
+            openai: 'openai', 
+            gemini: 'google',
+            huggingface: 'huggingface'
+          };
+          const provider = providerMapping[agentType] || agentType;
+          effectiveApiKey = creds[provider]?.value;
+        } catch (e) {
+          console.error('Error reading credentials:', e);
+        }
+      }
+    }
+    
+    if (!effectiveApiKey) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `No API key found for ${agentType}. Configure in Setup Wizard or provide apiKey.` 
+      });
+    }
+    
+    const agent = await agentSpawner.spawnAgent(agentType, effectiveApiKey, options);
+    
+    res.json({ success: true, data: agent });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/agents/spawn-for-task - Spawn an agent for a specific GitHub task
+app.post('/api/agents/spawn-for-task', async (req, res) => {
+  try {
+    const { agentType, repoUrl, taskDescription, githubToken } = req.body;
+    
+    if (!repoUrl || !taskDescription) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'repoUrl and taskDescription required' 
+      });
+    }
+    
+    // Get API key from stored credentials
+    const credPath = path.join(process.cwd(), '.createsuite', 'provider-credentials.json');
+    let apiKey = null;
+    if (fs.existsSync(credPath)) {
+      try {
+        const creds = JSON.parse(fs.readFileSync(credPath, 'utf-8'));
+        const providerMapping = { claude: 'anthropic', openai: 'openai', gemini: 'google' };
+        const provider = providerMapping[agentType || 'claude'] || 'anthropic';
+        apiKey = creds[provider]?.value;
+      } catch (e) {
+        console.error('Error reading credentials:', e);
+      }
+    }
+    
+    if (!apiKey) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'No API key configured. Use Setup Wizard first.' 
+      });
+    }
+    
+    const agent = await gitAgentSpawner.spawnForTask({
+      agentType: agentType || 'claude',
+      apiKey,
+      repoUrl,
+      taskDescription,
+      githubToken: githubToken || process.env.GITHUB_TOKEN
+    });
+    
+    res.json({ success: true, data: agent });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/agents/stop - Stop an agent
+app.post('/api/agents/stop', async (req, res) => {
+  try {
+    const { agentId } = req.body;
+    
+    if (!agentId) {
+      return res.status(400).json({ success: false, error: 'agentId required' });
+    }
+    
+    await agentSpawner.stopAgent(agentId);
+    
+    res.json({ success: true, message: `Agent ${agentId} stopped` });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/agents/stop-all - Stop all running agents
+app.post('/api/agents/stop-all', async (req, res) => {
+  try {
+    await agentSpawner.cleanup();
+    res.json({ success: true, message: 'All agents stopped' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ==================== OPENCODE SETUP ====================
 
 // Check for opencode
@@ -378,13 +710,20 @@ io.on('connection', (socket) => {
   console.log('Client connected', socket.id);
   
   let ptyProcess = null;
+  const sessionId = socket.id;
 
-  socket.on('spawn', ({ cols, rows }) => {
+  // Send current lifecycle status on connect
+  socket.emit('lifecycle:status', lifecycle.getStatus());
+
+  socket.on('spawn', ({ cols, rows, agentId, taskId }) => {
     if (isProduction && !enablePty) {
       socket.emit('output', '\r\nPTY disabled on this deployment. Set ENABLE_PTY=true to enable.\r\n');
       return;
     }
+    
+    // Kill existing PTY if any
     if (ptyProcess) {
+      lifecycle.unregisterSession(sessionId);
       ptyProcess.kill();
     }
 
@@ -405,8 +744,15 @@ io.on('connection', (socket) => {
             ...process.env,
             // Inject helper function for UI commands
             // usage: echo ":::UI_CMD:::{\"type\":\"image\",\"src\":\"path.png\"}"
+            CREATESUITE_SESSION_ID: sessionId,
+            CREATESUITE_AGENT_ID: agentId || '',
+            CREATESUITE_TASK_ID: taskId || ''
         }
       });
+      
+      // Register session with lifecycle manager
+      lifecycle.registerSession(sessionId, ptyProcess, { agentId, taskId });
+      
     } catch (err) {
       console.error('Failed to spawn pty:', err);
       return;
@@ -414,6 +760,9 @@ io.on('connection', (socket) => {
 
     ptyProcess.onData((data) => {
       socket.emit('output', data);
+      
+      // Update session activity
+      lifecycle.touchSession(sessionId);
       
       // Simple parsing for UI commands
       // Look for :::UI_CMD:::{JSON}:::
@@ -432,12 +781,16 @@ io.on('connection', (socket) => {
     ptyProcess.onExit(({ exitCode, signal }) => {
       console.log(`PTY exited with code ${exitCode} and signal ${signal}`);
       socket.emit('exit', { exitCode, signal });
+      
+      // Unregister session when PTY exits
+      lifecycle.unregisterSession(sessionId);
+      ptyProcess = null;
     });
   });
 
   socket.on('input', (data) => {
     if (ptyProcess) {
-      // console.log(`Input received: ${JSON.stringify(data)}`); // verbose
+      lifecycle.touchSession(sessionId);
       ptyProcess.write(data);
     }
   });
@@ -451,6 +804,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('Client disconnected', socket.id);
     if (ptyProcess) {
+      lifecycle.unregisterSession(sessionId);
       ptyProcess.kill();
     }
   });
@@ -464,4 +818,9 @@ app.get(/.*/, (req, res) => {
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
+  console.log(`Lifecycle management: ${process.env.AUTO_SHUTDOWN !== 'false' ? 'enabled' : 'disabled'}`);
+  console.log(`Grace period: ${(parseInt(process.env.GRACE_PERIOD_MS) || 15 * 60 * 1000) / 60000} minutes`);
+  
+  // Start completion checks after server is ready
+  lifecycle.startCompletionChecks();
 });
