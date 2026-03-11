@@ -1,0 +1,38 @@
+{
+  "name": "CreateSuite Optimal Container",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "elixir-lsp.elixir-ls",
+        "phoenixframework.phoenix",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "elixirLS.suggestSpecs": true,
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      }
+    }
+  },
+  "remoteUser": "root",
+  "postCreateCommand": "npm install && npm run build",
+  "forwardPorts": [3001, 4000, 5173],
+  "portsAttributes": {
+    "3001": {
+      "label": "Legacy Express Server",
+      "onAutoForward": "notify"
+    },
+    "4000": {
+      "label": "Phoenix Backend",
+      "onAutoForward": "notify"
+    },
+    "5173": {
+      "label": "Vite Frontend",
+      "onAutoForward": "openBrowser"
+    }
+  }
+}
