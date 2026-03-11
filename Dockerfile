@@ -32,10 +32,8 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cargo install eza bat zoxide starship
 
 # --- 5. Ghostty Terminfo (For the ultimate terminal experience) ---
-RUN mkdir -p /tmp/ghostty && \
-    curl -fsSL https://raw.githubusercontent.com/ghostty-org/ghostty/main/terminfo/ghostty.terminfo -o /tmp/ghostty/ghostty.terminfo && \
-    tic -x /tmp/ghostty/ghostty.terminfo && \
-    rm -rf /tmp/ghostty
+RUN mkdir -p /usr/share/terminfo/x && \
+    curl -fsSL https://raw.githubusercontent.com/sneethe/terminfo/master/78/xterm-ghostty -o /usr/share/terminfo/x/xterm-ghostty
 
 # --- 6. GitHub CLI ---
 RUN type -p curl >/dev/null || (apt-get update && apt-get install curl -y) \
