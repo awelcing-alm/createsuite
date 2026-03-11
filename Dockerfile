@@ -2,7 +2,7 @@
 # Designed to be a high-performance, aesthetically unique development environment
 
 # Base: Optimized Elixir + Erlang on Debian Bookworm
-FROM hexpm/elixir:1.18.2-erlang-27.2.1-debian-bookworm-20250120
+FROM hexpm/elixir:1.18.2-erlang-27.2.1-debian-bookworm-20260202
 
 # Suppress interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
