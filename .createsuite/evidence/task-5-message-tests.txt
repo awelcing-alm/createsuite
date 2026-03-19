@@ -1,0 +1,16 @@
+=== Task 5: Message Schema, Migration, Context, Tests ===
+Date: 2026-03-11
+
+Files created:
+- backend/priv/repo/migrations/20260311180804_create_messages.exs
+- backend/lib/backend/messaging/message.ex
+- backend/lib/backend/messaging.ex
+- backend/test/backend/messaging_test.exs
+
+Migration: messages table with FK to agents (binary_id), indexes on to_agent_id and read.
+
+Test results:
+  MIX_ENV=test mix test test/backend/messaging_test.exs → 16 tests, 0 failures
+  MIX_ENV=test mix test (full suite) → 66 tests, 0 failures
+
+Git commit: feat(backend): add message schema, migration, and tests (c57c027)

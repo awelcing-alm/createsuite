@@ -1,0 +1,3 @@
+=== 422 TEST (missing title) ===
+{"error":"Validation failed","success":false,"details":{"priority":["can't be blank"],"status":["can't be blank"],"title":["can't be blank"]}}
+HTTP_STATUS:422

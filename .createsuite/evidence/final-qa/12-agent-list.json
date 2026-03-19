@@ -1,0 +1,2 @@
+=== LIST AGENTS ===
+{"data":[{"id":"a71fe66b-132b-4b97-b090-6d2fc72600bd","name":"QA Agent","status":"idle","capabilities":["testing"],"currentTask":null,"terminalPid":null,"createdAt":"2026-03-11T18:53:12","updatedAt":"2026-03-11T18:53:12"}],"success":true}
