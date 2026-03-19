@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # --- 2. Node.js (22.x) & Bun ---
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs \
+    && apt-get install -y --no-install-recommends nodejs \
     && curl -fsSL https://bun.sh/install | bash \
     && rm -rf /var/lib/apt/lists/*
 ENV PATH="/root/.bun/bin:${PATH}"
@@ -42,7 +42,8 @@ RUN type -p curl >/dev/null || (apt-get update && apt-get install curl -y) \
     && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
     && apt-get update \
-    && apt-get install gh -y
+    && apt-get install -y --no-install-recommends gh \
+    && rm -rf /var/lib/apt/lists/*
 
 # --- 7. OpenCode & CreateSuite Runtime ---
 RUN curl -fsSL https://opencode.ai/install | bash
@@ -50,27 +51,68 @@ ENV PATH="/root/.opencode/bin:${PATH}"
 
 # --- 8. Zsh Setup (Oh My Zsh + Customizations) ---
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-RUN git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
-# Create a unique Zsh config
-RUN echo 'eval "$(starship init zsh)"' >> ~/.zshrc && \
+RUN mkdir -p ~/.config && cat <<'EOF' > ~/.config/starship.toml
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = false
+scan_timeout = 25
+command_timeout = 300
+follow_symlinks = false
+
+format = "$directory$git_branch$git_status$cmd_duration$line_break$character"
+
+[cmd_duration]
+min_time = 1200
+format = "[ took $duration](dimmed white)"
+EOF
+
+RUN echo 'export DISABLE_AUTO_UPDATE="true"' >> ~/.zshrc && \
+    echo 'export DISABLE_UPDATE_PROMPT="true"' >> ~/.zshrc && \
+    echo 'export ZSH_DISABLE_COMPFIX="true"' >> ~/.zshrc && \
+    echo 'export STARSHIP_LOG="error"' >> ~/.zshrc && \
+    echo 'eval "$(starship init zsh)"' >> ~/.zshrc && \
     echo 'eval "$(zoxide init zsh)"' >> ~/.zshrc && \
     echo 'alias ls="eza --icons"' >> ~/.zshrc && \
     echo 'alias cat="bat"' >> ~/.zshrc && \
     echo 'alias cs-tasks="ls .createsuite/tasks"' >> ~/.zshrc && \
     echo 'alias cs-agents="ls .createsuite/agents"' >> ~/.zshrc && \
-    echo 'alias cs-convoys="ls .createsuite/convoys"' >> ~/.zshrc
+    echo 'alias cs-convoys="ls .createsuite/convoys"' >> ~/.zshrc && \
+    echo '[[ -t 1 ]] && /usr/local/bin/createsuite-startup-art' >> ~/.zshrc
 
-# --- 9. CreateSuite Welcome Message (The "Zone" feel) ---
-RUN echo 'echo "\033[1;35m      ___                   _         ____        _ _       \033[0m"' >> ~/.zshrc && \
-    echo 'echo "\033[1;35m     / __\ __ ___  __ _| |_ ___ / ___| _   _(_) |_ ___ \033[0m"' >> ~/.zshrc && \
-    echo 'echo "\033[1;34m    / / | \x27__/ _ \/ _\x60 | __/ _ \\___ \| | | | | __/ _ \ \033[0m"' >> ~/.zshrc && \
-    echo 'echo "\033[1;34m   / /__| | |  __/ (_| | ||  __/ ___| | |_| | | ||  __/ \033[0m"' >> ~/.zshrc && \
-    echo 'echo "\033[1;36m   \____/_|  \___|\__,_|\__\___|____/ \__,_|_|\__\___| \033[0m"' >> ~/.zshrc && \
-    echo 'echo "\033[1;32m   --------------------------------------------------- \033[0m"' >> ~/.zshrc && \
-    echo 'echo "\033[1;33m   Welcome to the CreateSuite Evolution Zone.           \033[0m"' >> ~/.zshrc && \
-    echo 'echo "\033[0m"' >> ~/.zshrc
+RUN cat <<'EOF' > /usr/local/bin/createsuite-startup-art
+#!/usr/bin/env bash
+
+if [[ -n "${CREATESUITE_NO_MOTD:-}" ]]; then
+  exit 0
+fi
+
+if [[ ! -t 1 ]]; then
+  exit 0
+fi
+
+render() {
+  local shift="$1"
+  printf "\e[38;2;255;105;80m%*s%s\e[0m\n" "$shift" "" "..::..::..::..::..::..::..::..::..::..::.."
+  printf "\e[38;2;255;173;96m%*s%s\e[0m\n" "$shift" "" ".::--==++**xx%%##%%xx**++==--::.  createsuite"
+  printf "\e[38;2;255;214;120m%*s%s\e[0m\n" "$shift" "" "::--==++**x%%%%@@@@%%%%x**++==--::  kinetic mesh"
+  printf "\e[38;2;180;226;120m%*s%s\e[0m\n" "$shift" "" "..::--==++**x%%%%@@%%%%x**++==--::.."
+  printf "\e[38;2;110;214;170m%*s%s\e[0m\n" "$shift" "" "   ____                _       ____        _ _"
+  printf "\e[38;2;90;193;230m%*s%s\e[0m\n" "$shift" "" "  / ___|_ __ ___  __ _| |_ ___/ ___| _   _(_) |_ ___"
+  printf "\e[38;2;102;153;255m%*s%s\e[0m\n" "$shift" "" " | |   | '__/ _ \/ _\` | __/ _ \\___ \\| | | | | __/ _ \\"
+  printf "\e[38;2;153;120;255m%*s%s\e[0m\n" "$shift" "" " | |___| | |  __/ (_| | ||  __/___) | |_| | | ||  __/"
+  printf "\e[38;2;214;110;255m%*s%s\e[0m\n" "$shift" "" "  \\____|_|  \\___|\\__,_|\\__\\___|____/ \\__,_|_|\\__\\___|"
+  printf "\e[38;2;220;220;220m%*s%s\e[0m\n" "$shift" "" "..::..::..::..::..::..::..::..::..::..::..::.."
+}
+
+render 0
+sleep 0.010
+render 1
+sleep 0.010
+render 0
+printf "\e[2m%s\e[0m\n\n" "startup telemetry: stable | prompt diagnostics: clear"
+EOF
+RUN chmod +x /usr/local/bin/createsuite-startup-art
 
 # --- 10. Elixir/Mix Optimization ---
 RUN mix local.hex --force && \

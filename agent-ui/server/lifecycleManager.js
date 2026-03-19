@@ -3,7 +3,7 @@
  * 
  * Intelligent container lifecycle management for Fly.io ephemeral deploys.
  * - Tracks active terminal sessions and work status
- * - Auto-shuts down when all work completes (with 15-minute grace period)
+ * - Auto-shuts down when all work completes (with 8-minute grace period)
  * - Provides agent controls for hold, restart, rebuild operations
  * - Emits events for UI notifications
  */
@@ -34,9 +34,9 @@ class LifecycleManager {
     
     // Configuration (from environment)
     this.config = {
-      gracePeriodMs: parseInt(process.env.GRACE_PERIOD_MS) || 15 * 60 * 1000, // 15 minutes default
+      gracePeriodMs: parseInt(process.env.GRACE_PERIOD_MS) || 8 * 60 * 1000, // 8 minutes default
       autoShutdown: process.env.AUTO_SHUTDOWN !== 'false', // Default: enabled
-      checkIntervalMs: parseInt(process.env.CHECK_INTERVAL_MS) || 10000, // 10 seconds
+      checkIntervalMs: parseInt(process.env.CHECK_INTERVAL_MS) || 30000, // 30 seconds
       minUptimeMs: parseInt(process.env.MIN_UPTIME_MS) || 30000, // 30 seconds minimum
     };
     

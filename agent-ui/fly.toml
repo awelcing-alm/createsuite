@@ -11,7 +11,7 @@ primary_region = "iad"
   NODE_ENV = "production"
   ENABLE_PTY = "true"
   AUTO_SHUTDOWN = "true"
-  GRACE_PERIOD_MS = "900000"  # 15 minutes
+  GRACE_PERIOD_MS = "480000"  # 8 minutes
   GITHUB_REPOSITORY = "awelcing-alm/createsuite"
 
 # Secrets (set via `fly secrets set`):

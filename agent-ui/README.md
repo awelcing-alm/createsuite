@@ -90,7 +90,7 @@ agent-ui/
 | `PORT` | Server port | `3001` |
 | `ENABLE_PTY` | Enable terminal | `true` |
 | `AUTO_SHUTDOWN` | Auto-shutdown when idle | `true` |
-| `GRACE_PERIOD_MS` | Grace period before shutdown | `900000` (15 min) |
+| `GRACE_PERIOD_MS` | Grace period before shutdown | `480000` (8 min) |
 | `WEBHOOK_URL` | Slack/Discord notifications | - |
 | `GITHUB_TOKEN` | For agent-triggered rebuilds | - |
 
@@ -102,4 +102,4 @@ agent-ui/
 
 ## 🙌 Contributing
 
-PRs welcome! Check out the [development guide](../docs/guides/GETTING_STARTED.md).# Force workflow trigger
+PRs welcome! Check out the [development guide](../docs/guides/GETTING_STARTED.md).

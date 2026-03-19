@@ -100,7 +100,7 @@ if (apiToken) {
   });
 }
 
-const SHELL = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+const SHELL = process.env.SHELL || (os.platform() === 'win32' ? 'powershell.exe' : 'bash');
 
 // ==================== MONITORING API ENDPOINTS ====================
 
@@ -742,6 +742,7 @@ io.on('connection', (socket) => {
         cwd: process.env.HOME,
         env: {
             ...process.env,
+            NODE_OPTIONS: '',
             // Inject helper function for UI commands
             // usage: echo ":::UI_CMD:::{\"type\":\"image\",\"src\":\"path.png\"}"
             CREATESUITE_SESSION_ID: sessionId,
@@ -819,7 +820,7 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
   console.log(`Lifecycle management: ${process.env.AUTO_SHUTDOWN !== 'false' ? 'enabled' : 'disabled'}`);
-  console.log(`Grace period: ${(parseInt(process.env.GRACE_PERIOD_MS) || 15 * 60 * 1000) / 60000} minutes`);
+  console.log(`Grace period: ${(parseInt(process.env.GRACE_PERIOD_MS) || 8 * 60 * 1000) / 60000} minutes`);
   
   // Start completion checks after server is ready
   lifecycle.startCompletionChecks();
