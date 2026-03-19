@@ -155,3 +155,15 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Rust build artifacts
+diagrams/rust-diagrams/target/
+*/target/
+target/
+
+# WASM build output
+*.wasm
+*.wasm.gz
+
+# Cargo.lock location for workspace
+Cargo.lock

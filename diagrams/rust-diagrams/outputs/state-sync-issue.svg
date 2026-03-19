@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 610.00 580.00"  class="diagram-architecture" data-diagram-id="3477f103-7a0a-483e-9078-eb1e199ce0f0">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#8b949e"/>
+    </marker>
+    <marker id="diamond" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+      <polygon points="0 5, 5 0, 10 5, 5 10" fill="none" stroke="#8b949e"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+    <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#21262d" stroke-width="0.5" opacity="0.3"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#smallGrid)"/>
+  <rect x="0" y="0" width="610.00" height="580.00" fill="#0d1117"/>
+  <text x="20" y="30" fill="#c9d1d9" font-family="system-ui" font-size="18" font-weight="bold">State Synchronization Issues</text>
+  <g class="node" data-node-id="ui-state">
+<rect x="800.00" y="50.00" width="180.00" height="80.00" rx="8.00" ry="8.00" fill="#1f6feb" stroke="#58a6ff" stroke-width="2.00" opacity="1.00"/><text x="890" y="90" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-size="14" fill="#c9d1d9">UI State</text>  </g>
+  <g class="node" data-node-id="git-state">
+<polygon points="560,450 713,450 740,477 740,530 560,530" fill="#8b949e" stroke="#c9d1d9" stroke-width="2.00" opacity="1.00"/><text x="650" y="490" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-size="14" fill="#c9d1d9">Git State</text>  </g>
+  <g class="node" data-node-id="server-state">
+<rect x="560.00" y="250.00" width="180.00" height="80.00" rx="8.00" ry="8.00" fill="#238636" stroke="#2ea043" stroke-width="2.00" opacity="1.00"/><text x="650" y="290" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-size="14" fill="#c9d1d9">Server State</text>  </g>
+  <g class="node" data-node-id="sync-issue">
+<ellipse cx="560.00" cy="90.00" rx="90.00" ry="40.00" fill="#00cc66" stroke="#39d353" stroke-width="2.00" opacity="1.00"/><text x="560" y="90" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-size="14" fill="#c9d1d9">⚠ Sync Gap</text>  </g>
+  <g class="edge" data-edge-id="ui-state-server-state">
+<path d="M800.00,90.00 560.00,290.00" fill="none" stroke="#8b949e" stroke-width="2.00"/><polygon points="560.00,290.00 549.12,292.56 555.52,300.24" fill="none" stroke="#8b949e" stroke-width="2.00"/><rect x="640.00" y="180.00" width="80" height="20" rx="4" fill="#0d1117" stroke="#21262d"/><text x="680.00" y="190.00" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-size="11" fill="#c9d1d9">HTTP Poll</text>  </g>
+  <g class="edge" data-edge-id="ui-state-git-state">
+<path d="M890.00,130.00 650.00,530.00" fill="none" stroke="#8b949e" stroke-width="2.00"/><polygon points="650.00,530.00 640.57,536.00 649.14,541.15" fill="none" stroke="#8b949e" stroke-width="2.00"/><rect x="730.00" y="320.00" width="80" height="20" rx="4" fill="#0d1117" stroke="#21262d"/><text x="770.00" y="330.00" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-size="11" fill="#c9d1d9">Git Push</text>  </g>
+  <g class="edge" data-edge-id="server-state-git-state">
+<path d="M650.00,330.00 650.00,530.00" fill="none" stroke="#8b949e" stroke-width="2.00"/><polygon points="650.00,530.00 645.00,540.00 655.00,540.00" fill="none" stroke="#8b949e" stroke-width="2.00"/><rect x="610.00" y="420.00" width="80" height="20" rx="4" fill="#0d1117" stroke="#21262d"/><text x="650.00" y="430.00" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-size="11" fill="#c9d1d9">Git Write</text>  </g>
+  <metadata>
+    <diagram title="State Synchronization Issues" id="3477f103-7a0a-483e-9078-eb1e199ce0f0" kind="Architecture" created="2026-03-19T15:59:10.668652737+00:00" updated="2026-03-19T15:59:10.668652737+00:00"/>
+  </metadata>
+</svg>

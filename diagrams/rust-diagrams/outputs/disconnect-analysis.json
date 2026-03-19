@@ -1,0 +1,101 @@
+{
+  "title": "Elixir Backend ↔ Agent-UI Disconnect Analysis",
+  "description": "Comprehensive analysis of architectural disconnects between Elixir backend and TypeScript/React frontend",
+  "issues": [
+    {
+      "id": "DISC-001",
+      "severity": "Critical",
+      "title": "Protocol Translation Gap",
+      "description": "WebSocket messages from Agent UI must be translated to GenServer calls, introducing latency and potential message loss",
+      "location": {
+        "component": "api-gateway",
+        "connection": "WebSocket → GenServer",
+        "protocol": "Socket.IO ↔ GenServer"
+      },
+      "recommendation": "Implement direct WebSocket handlers in Phoenix channels with automatic GenServer translation"
+    },
+    {
+      "id": "DISC-002",
+      "severity": "High",
+      "title": "State Synchronization Delay",
+      "description": "UI state updates are pulled on intervals while Elixir backend uses ETS for real-time state. Convoy and task updates may appear stale",
+      "location": {
+        "component": "convoy-manager",
+        "connection": "Server State → UI State",
+        "protocol": "HTTP/Polling"
+      },
+      "recommendation": "Use Phoenix Presence for real-time state sync across all connected clients"
+    },
+    {
+      "id": "DISC-003",
+      "severity": "High",
+      "title": "Git Bridge Latency",
+      "description": "simple-git operations run on Node.js side while Elixir uses its own Git state. Double-write pattern introduces inconsistency risk",
+      "location": {
+        "component": "git-storage",
+        "connection": "task-manager → git-state",
+        "protocol": "File System"
+      },
+      "recommendation": "Consolidate Git operations in one layer; prefer Elixir's Porcelain or Gitx for atomic operations"
+    },
+    {
+      "id": "DISC-004",
+      "severity": "Medium",
+      "title": "Agent Lifecycle Mismatch",
+      "description": "Elixir's supervised agent model doesn't map directly to UI agent representations. Status updates can be out of sync",
+      "location": {
+        "component": "agent-orchestrator",
+        "connection": "Agent Lifecycle",
+        "protocol": "Supervision Tree"
+      },
+      "recommendation": "Implement explicit state machine for agent lifecycle visible to UI with proper terminal states"
+    },
+    {
+      "id": "DISC-005",
+      "severity": "Medium",
+      "title": "Convoy Grouping Semantic Gap",
+      "description": "Convoy grouping logic exists in Elixir but UI shows different grouping due to TypeScript state transformation",
+      "location": {
+        "component": "convoy-manager",
+        "connection": "Elixir Convoys → TS Convoys",
+        "protocol": "JSON Serialization"
+      },
+      "recommendation": "Define shared convoy schema with validation at both boundaries"
+    },
+    {
+      "id": "DISC-006",
+      "severity": "Low",
+      "title": "Error Propagation Opacity",
+      "description": "Elixir errors are caught at gateway level and converted to generic HTTP responses. Original error context is lost",
+      "location": {
+        "component": "api-gateway",
+        "connection": "Backend → Gateway",
+        "protocol": "GenServer Responses"
+      },
+      "recommendation": "Implement structured error responses with error codes that map to UI error states"
+    }
+  ],
+  "components": [
+    {
+      "component_id": "task-manager",
+      "issues": [
+        "Task status enum mismatch: TS uses TaskStatus enum, Elixir uses atom keys",
+        "Priority levels not synchronized during concurrent updates"
+      ]
+    },
+    {
+      "component_id": "convoy-manager",
+      "issues": [
+        "Convoy status tracking happens in ETS but UI polls Git for updates",
+        "Task assignment events not propagated to UI in real-time"
+      ]
+    },
+    {
+      "component_id": "agent-orchestrator",
+      "issues": [
+        "Agent mailbox messages not exposed to UI",
+        "Terminal PID mapping between Elixir and node-pty is implicit"
+      ]
+    }
+  ]
+}
