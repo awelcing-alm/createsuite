@@ -1,3 +1,9 @@
+if (process.env.AGENT_MODE === 'worker') {
+  console.log('[Entrypoint] AGENT_MODE=worker detected, routing to worker.js');
+  require('./worker');
+  return;
+}
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -24,6 +30,7 @@ app.use(cors({
   methods: ['GET', 'POST']
 }));
 app.use(express.json());
+app.set('trust proxy', 1);
 
 const limiter = rateLimit({
   windowMs: 60 * 1000,
@@ -56,6 +63,7 @@ if (apiToken) {
 }
 
 app.use('/api', limiter);
+app.set('trust proxy', 1);
 
 // Serve static files from the React app build directory
 const distPath = path.join(__dirname, '../dist');
@@ -712,8 +720,37 @@ io.on('connection', (socket) => {
   let ptyProcess = null;
   const sessionId = socket.id;
 
-  // Send current lifecycle status on connect
   socket.emit('lifecycle:status', lifecycle.getStatus());
+
+  socket.on('worker:handshake', (data) => {
+    console.log(`[Worker] Handshake received from agent ${data.agentId} (${data.agentName})`);
+    agentSpawner.confirmWorkerReady(data.agentId, socket.id);
+    io.emit('agent:worker-connected', {
+      agentId: data.agentId,
+      agentName: data.agentName,
+      agentType: data.agentType,
+      socketId: socket.id,
+    });
+  });
+
+  socket.on('worker:heartbeat', (data) => {
+    agentSpawner.updateWorkerHeartbeat(data.agentId, data);
+  });
+
+  socket.on('worker:output', (data) => {
+    io.emit('agent:output', data);
+  });
+
+  socket.on('worker:error', (data) => {
+    console.error(`[Worker] Error from agent ${data.agentId}: ${data.error}`);
+    io.emit('agent:error', { agentId: data.agentId, error: data.error });
+  });
+
+  socket.on('worker:exit', (data) => {
+    console.log(`[Worker] Agent ${data.agentId} exited: code=${data.exitCode} signal=${data.signal}`);
+    agentSpawner.markWorkerExited(data.agentId);
+    io.emit('agent:stopped', { agentId: data.agentId, exitCode: data.exitCode });
+  });
 
   socket.on('spawn', ({ cols, rows, agentId, taskId }) => {
     if (isProduction && !enablePty) {
@@ -732,14 +769,15 @@ io.on('connection', (socket) => {
     // Spawn the shell. In a real scenario, this might be 'opencode' directly
     // or a shell that has opencode in the path.
     // We add '-l' to bash to make it a login shell and load .bashrc/.profile
-    const args = SHELL === 'bash' ? ['-l'] : [];
+    const args = SHELL.includes('bash') ? ['-l'] : [];
 
     try {
       ptyProcess = pty.spawn(SHELL, args, {
+
         name: 'xterm-color',
         cols: cols || 80,
         rows: rows || 30,
-        cwd: process.env.HOME,
+        cwd: process.env.HOME || process.cwd(),
         env: {
             ...process.env,
             NODE_OPTIONS: '',

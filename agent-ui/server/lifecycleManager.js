@@ -32,12 +32,14 @@ class LifecycleManager {
       shutdownReason: null
     };
     
-    // Configuration (from environment)
+    const isProduction = process.env.NODE_ENV === 'production';
     this.config = {
-      gracePeriodMs: parseInt(process.env.GRACE_PERIOD_MS) || 8 * 60 * 1000, // 8 minutes default
-      autoShutdown: process.env.AUTO_SHUTDOWN !== 'false', // Default: enabled
-      checkIntervalMs: parseInt(process.env.CHECK_INTERVAL_MS) || 30000, // 30 seconds
-      minUptimeMs: parseInt(process.env.MIN_UPTIME_MS) || 30000, // 30 seconds minimum
+      gracePeriodMs: parseInt(process.env.GRACE_PERIOD_MS) || 8 * 60 * 1000,
+      autoShutdown: isProduction
+        ? process.env.AUTO_SHUTDOWN !== 'false'
+        : process.env.AUTO_SHUTDOWN === 'true',
+      checkIntervalMs: parseInt(process.env.CHECK_INTERVAL_MS) || 30000,
+      minUptimeMs: parseInt(process.env.MIN_UPTIME_MS) || 30000,
     };
     
     // Completion check interval

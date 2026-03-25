@@ -224,23 +224,20 @@ class AgentSpawner {
         ...config
       });
 
-      // Wait for machine to start
       await this.waitForMachine(machine.id);
 
-      // Update status
       const agentInfo = this.activeAgents.get(agentId);
-      agentInfo.status = 'running';
-      
-      // Emit ready status
-      this.io.emit('agent:ready', {
+      agentInfo.status = 'started';
+
+      this.io.emit('agent:started', {
         agentId,
         machineId: machine.id,
         type: agentType,
         name: config.name,
-        status: 'running'
+        status: 'started',
       });
 
-      console.log(`[AgentSpawner] Agent ${config.name} is ready: ${machine.id}`);
+      console.log(`[AgentSpawner] Machine started for ${config.name}: ${machine.id} (waiting for worker handshake)`);
       
       return {
         agentId,
@@ -318,9 +315,43 @@ class AgentSpawner {
     }
   }
 
-  /**
-   * List all active agents
-   */
+  confirmWorkerReady(agentId, socketId) {
+    const agent = this.activeAgents.get(agentId);
+    if (agent) {
+      agent.status = 'running';
+      agent.workerSocketId = socketId;
+      agent.workerConnectedAt = new Date();
+      console.log(`[AgentSpawner] Worker confirmed ready: ${agentId} (socket ${socketId})`);
+      this.io.emit('agent:ready', {
+        agentId,
+        machineId: agent.machineId,
+        type: agent.type,
+        name: agent.name,
+        status: 'running',
+      });
+    } else {
+      console.warn(`[AgentSpawner] Handshake from unknown agent: ${agentId}`);
+    }
+  }
+
+  updateWorkerHeartbeat(agentId, data) {
+    const agent = this.activeAgents.get(agentId);
+    if (agent) {
+      agent.lastHeartbeat = Date.now();
+      agent.workerUptime = data.uptime;
+      agent.workerMemory = data.memory;
+    }
+  }
+
+  markWorkerExited(agentId) {
+    const agent = this.activeAgents.get(agentId);
+    if (agent) {
+      agent.status = 'stopped';
+      agent.workerSocketId = null;
+      console.log(`[AgentSpawner] Worker exited: ${agentId}`);
+    }
+  }
+
   getActiveAgents() {
     return Array.from(this.activeAgents.entries()).map(([id, info]) => ({
       agentId: id,
@@ -328,16 +359,10 @@ class AgentSpawner {
     }));
   }
 
-  /**
-   * Get agent configurations
-   */
   getAgentConfigs() {
     return AGENT_CONFIGS;
   }
 
-  /**
-   * Cleanup - stop all agents
-   */
   async cleanup() {
     console.log(`[AgentSpawner] Cleaning up ${this.activeAgents.size} agents`);
     

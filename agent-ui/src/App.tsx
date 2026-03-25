@@ -205,7 +205,7 @@ const App: React.FC = () => {
     setWindows(prev => prev.map(t => t.id === id ? { ...t, zIndex: newZ } : t));
   };
 
-  const handleUiCommand = (payload: UiCommandPayload) => {
+  const handleUiCommand = useCallback((payload: UiCommandPayload) => {
     if (!payload.type) return;
     if (payload.type === 'image') {
       const src = payload.src?.startsWith('http') ? payload.src : `/workspace/${payload.src}`;
@@ -213,7 +213,7 @@ const App: React.FC = () => {
     } else if (payload.type === 'browser') {
       spawnWindow('browser', payload.title || 'Browser', payload.url);
     }
-  };
+  }, []);
 
   const runConvoyTest = useCallback(() => {
     const w = window.innerWidth;

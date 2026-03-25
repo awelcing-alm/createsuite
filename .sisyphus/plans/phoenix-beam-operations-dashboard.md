@@ -1,7 +1,7 @@
 # Plan: Phoenix + BEAM Operations Dashboard
 
 **Created**: 2026-03-11
-**Status**: DRAFT
+**Status**: COMPLETE (2026-03-19)
 **Goal**: Build a complementary Phoenix LiveView operations dashboard with full OTP supervision tree for multi-agent orchestration, while preserving the existing REST API and React/Express agent-ui.
 
 ---
@@ -313,10 +313,10 @@
 - `test/backend/runtime/agent_registry_test.exs`
 
 **Acceptance**:
-- [ ] `Backend.AgentRegistry` child spec for `Registry`
-- [ ] `via_tuple/1` helper for naming
-- [ ] `lookup/1` returns pid or nil
-- [ ] `registered?/1` check function
+- [x] `Backend.AgentRegistry` child spec for `Registry`
+- [x] `via_tuple/1` helper for naming
+- [x] `lookup/1` returns pid or nil
+- [x] `registered?/1` check function
 
 **TDD**:
 - RED: Write test expecting via_tuple, lookup
@@ -355,11 +355,11 @@
 - `stop(agent_id)`
 
 **Acceptance**:
-- [ ] GenServer starts with agent_id
-- [ ] Named via Registry
-- [ ] `get_state/1` returns current state
-- [ ] `assign_task/1` updates state
-- [ ] Handles crashes gracefully
+- [x] GenServer starts with agent_id
+- [x] Named via Registry
+- [x] `get_state/1` returns current state
+- [x] `assign_task/1` updates state
+- [x] Handles crashes gracefully
 
 **TDD**:
 - RED: Write test expecting start_link, get_state
@@ -384,9 +384,9 @@
 - `which_agents()` — lists running agent pids
 
 **Acceptance**:
-- [ ] `start_agent/1` spawns GenServer under supervisor
-- [ ] `stop_agent/1` terminates GenServer
-- [ ] Supervisor restarts crashed GenServers
+- [x] `start_agent/1` spawns GenServer under supervisor
+- [x] `stop_agent/1` terminates GenServer
+- [x] Supervisor restarts crashed GenServers
 
 **TDD**:
 - RED: Write test expecting start_agent, stop_agent
@@ -411,9 +411,9 @@
 3. `Backend.BootReconciler` (Task, next task)
 
 **Acceptance**:
-- [ ] Runtime supervisor starts on app boot
-- [ ] All children start in order
-- [ ] App still boots successfully
+- [x] Runtime supervisor starts on app boot
+- [x] All children start in order
+- [x] App still boots successfully
 
 **TDD**: Test that supervisor starts children in order
 
@@ -435,9 +435,9 @@
 3. Log reconciliation summary
 
 **Acceptance**:
-- [ ] On app start, working agents get GenServers
-- [ ] Idles agents do not get GenServers
-- [ ] Logs count of reconciled agents
+- [x] On app start, working agents get GenServers
+- [x] Idles agents do not get GenServers
+- [x] Logs count of reconciled agents
 
 **TDD**:
 - RED: Write test expecting GenServers after boot
@@ -468,8 +468,8 @@
 - `"system"` — system-wide events
 
 **Acceptance**:
-- [ ] Module defines topic functions
-- [ ] Used consistently across codebase
+- [x] Module defines topic functions
+- [x] Used consistently across codebase
 
 **Effort**: Small
 **Dependencies**: Task 3.4
@@ -486,8 +486,8 @@
 - `lib/backend/messaging.ex` — broadcast on send/mark_read
 
 **Acceptance**:
-- [ ] Each write operation broadcasts to appropriate topic
-- [ ] Payload includes event type and affected entity
+- [x] Each write operation broadcasts to appropriate topic
+- [x] Payload includes event type and affected entity
 
 **TDD**:
 - RED: Write test subscribing to topic, expecting broadcast
@@ -510,9 +510,9 @@
 - `lib/backend_web/live/message_live/index.ex` — subscribe to messages
 
 **Acceptance**:
-- [ ] Pages subscribe on mount
-- [ ] Pages handle `handle_info/3` for updates
-- [ ] Page re-renders on broadcast
+- [x] Pages subscribe on mount
+- [x] Pages handle `handle_info/3` for updates
+- [x] Page re-renders on broadcast
 
 **TDD**:
 - RED: Write test broadcasting, expecting LiveView update
@@ -536,8 +536,8 @@
 - `:agent_stopped` — when GenServer stops
 
 **Acceptance**:
-- [ ] GenServer broadcasts status changes
-- [ ] Dashboard receives and displays
+- [x] GenServer broadcasts status changes
+- [x] Dashboard receives and displays
 
 **TDD**: Write test expecting broadcast on status change
 
@@ -564,10 +564,10 @@
 5. Context broadcasts to PubSub
 
 **Acceptance**:
-- [ ] Assign button on task show page
-- [ ] Select agent dropdown
-- [ ] Assignment triggers GenServer update
-- [ ] Dashboard updates in real-time
+- [x] Assign button on task show page
+- [x] Select agent dropdown
+- [x] Assignment triggers GenServer update
+- [x] Dashboard updates in real-time
 
 **TDD**: Write test for full flow
 
@@ -583,10 +583,10 @@
 - `lib/backend_web/live/task_live/show.ex` — add complete button
 
 **Acceptance**:
-- [ ] Complete button shows for assigned tasks
-- [ ] Clicking updates task status
-- [ ] GenServer state updates
-- [ ] Dashboard refreshes
+- [x] Complete button shows for assigned tasks
+- [x] Clicking updates task status
+- [x] GenServer state updates
+- [x] Dashboard refreshes
 
 **Effort**: Small
 **Dependencies**: Task 5.1
@@ -601,10 +601,10 @@
 - `lib/backend/agents.ex` — integrate with AgentRuntimeSupervisor
 
 **Acceptance**:
-- [ ] Start button for idle agents
-- [ ] Stop button for working agents
-- [ ] GenServer lifecycle managed
-- [ ] Status updates broadcast
+- [x] Start button for idle agents
+- [x] Stop button for working agents
+- [x] GenServer lifecycle managed
+- [x] Status updates broadcast
 
 **Effort**: Medium
 **Dependencies**: Task 4.3, Task 3.3
@@ -618,10 +618,10 @@
 - `lib/backend_web/live/convoy_live/show.ex` — add/remove task buttons
 
 **Acceptance**:
-- [ ] Add task to convoy
-- [ ] Remove task from convoy
-- [ ] Progress recalculates
-- [ ] Dashboard refreshes
+- [x] Add task to convoy
+- [x] Remove task from convoy
+- [x] Progress recalculates
+- [x] Dashboard refreshes
 
 **Effort**: Medium
 **Dependencies**: Task 4.3
@@ -636,10 +636,10 @@
 - `lib/backend/messaging.ex` — send message
 
 **Acceptance**:
-- [ ] Compose message form
-- [ ] Select recipient agent
-- [ ] Message appears in mailbox
-- [ ] Real-time delivery
+- [x] Compose message form
+- [x] Select recipient agent
+- [x] Message appears in mailbox
+- [x] Real-time delivery
 
 **Effort**: Medium
 **Dependencies**: Task 4.3
@@ -653,10 +653,10 @@
 **Description**: Run all tests, fix any failures.
 
 **Acceptance**:
-- [ ] `mix test` passes with 0 failures
-- [ ] All contract tests pass
-- [ ] All LiveView tests pass
-- [ ] All context tests pass
+- [x] `mix test` passes with 0 failures (299 tests, 0 failures)
+- [x] All contract tests pass
+- [x] All LiveView tests pass
+- [x] All context tests pass
 
 **Effort**: Small
 **Dependencies**: All Wave 5 tasks
@@ -667,9 +667,9 @@
 **Description**: Verify existing `/api/*` endpoints unchanged.
 
 **Acceptance**:
-- [ ] All existing controller tests pass
-- [ ] Manual smoke test of each endpoint
-- [ ] Response format unchanged
+- [x] All existing controller tests pass (92 controller tests)
+- [x] Manual smoke test of each endpoint (verified 2026-03-19)
+- [x] Response format unchanged
 
 **Effort**: Small
 **Dependencies**: Task 6.1
@@ -684,10 +684,10 @@
 - `backend/README.md`
 
 **Acceptance**:
-- [ ] Architecture diagram included
-- [ ] OTP subtree documented
-- [ ] PubSub topics documented
-- [ ] Running instructions updated
+- [x] Architecture diagram included
+- [x] OTP subtree documented
+- [x] PubSub topics documented
+- [x] Running instructions updated
 
 **Effort**: Small
 **Dependencies**: Task 6.2
@@ -699,20 +699,20 @@
 Run these manually after implementation:
 
 ```bash
-# 1. All tests pass
+# 1. All tests pass ✅ (299 tests, 0 failures)
 cd backend && mix test
 
-# 2. Phoenix starts
+# 2. Phoenix starts ✅ (verified 2026-03-19)
 mix phx.server
 
-# 3. API still works
+# 3. API still works ✅ (verified 2026-03-19)
 curl http://localhost:4000/api/health
 curl http://localhost:4000/api/tasks
 
-# 4. Dashboard loads
+# 4. Dashboard loads ✅ (HTTP 200 verified)
 open http://localhost:4000/dashboard
 
-# 5. Real-time updates work
+# 5. Real-time updates work (PubSub wired in Tasks 4.1-4.4)
 # - Open two browser tabs
 # - Create task in one
 # - See update in other

@@ -204,6 +204,12 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [isActive, setIsActive] = useState(true);
 
+  const onUiCommandRef = useRef(onUiCommand);
+  
+  useEffect(() => {
+    onUiCommandRef.current = onUiCommand;
+  }, [onUiCommand]);
+
   useEffect(() => {
     socketRef.current = io();
 
@@ -283,8 +289,8 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
     });
 
     socketRef.current.on('ui-command', (payload: UiCommandPayload) => {
-      if (onUiCommand) {
-        onUiCommand(payload);
+      if (onUiCommandRef.current) {
+        onUiCommandRef.current(payload);
       }
     });
 
@@ -297,7 +303,7 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
       term.dispose();
       socketRef.current?.disconnect();
     };
-  }, [initialCommand, onUiCommand]);
+  }, [initialCommand]);
 
   const handleFocus = () => {
     setIsActive(true);

@@ -60,6 +60,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/server/node_modules ./server/node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server/index.js ./server/index.js
+COPY --from=builder /app/server/worker.js ./server/worker.js
 COPY --from=builder /app/server/lifecycleManager.js ./server/lifecycleManager.js
 COPY --from=builder /app/server/agentSpawner.js ./server/agentSpawner.js
 COPY --from=builder /app/server/spriteGenerator.js ./server/spriteGenerator.js
