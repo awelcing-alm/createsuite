@@ -1,30 +1,55 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Background square with Windows 95 style border -->
-  <rect x="2" y="2" width="96" height="96" fill="#008080" rx="8"/>
-  <rect x="4" y="4" width="92" height="92" fill="#000080" rx="6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea"/>
+      <stop offset="100%" style="stop-color:#764ba2"/>
+    </linearGradient>
+    <linearGradient id="window" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3a3a3c"/>
+      <stop offset="100%" style="stop-color:#2c2c2e"/>
+    </linearGradient>
+  </defs>
   
-  <!-- Stacked layers representing agents/terminals -->
-  <g transform="translate(20, 15)">
-    <!-- Back terminal -->
-    <rect x="20" y="0" width="45" height="35" fill="#c0c0c0" stroke="#dfdfdf" stroke-width="2"/>
-    <rect x="20" y="0" width="45" height="12" fill="#000080"/>
-    <rect x="24" y="14" width="37" height="17" fill="#000"/>
-    <text x="28" y="27" fill="#00ff00" font-size="10" font-family="monospace">&gt;_</text>
-    
-    <!-- Middle terminal -->
-    <rect x="10" y="15" width="45" height="35" fill="#c0c0c0" stroke="#dfdfdf" stroke-width="2"/>
-    <rect x="10" y="15" width="45" height="12" fill="#000080"/>
-    <rect x="14" y="29" width="37" height="17" fill="#000"/>
-    <text x="18" y="42" fill="#00ff00" font-size="10" font-family="monospace">&gt;_</text>
-    
-    <!-- Front terminal -->
-    <rect x="0" y="30" width="45" height="35" fill="#c0c0c0" stroke="#dfdfdf" stroke-width="2"/>
-    <rect x="0" y="30" width="45" height="12" fill="#000080"/>
-    <rect x="4" y="44" width="37" height="17" fill="#000"/>
-    <text x="8" y="57" fill="#00ff00" font-size="10" font-family="monospace">&gt;_</text>
-  </g>
+  <!-- Background -->
+  <rect x="0" y="0" width="128" height="128" fill="url(#bg)" rx="24"/>
   
-  <!-- Sparkle/AI indicator -->
-  <circle cx="78" cy="22" r="12" fill="#ffdd00"/>
-  <text x="78" y="27" text-anchor="middle" fill="#000080" font-size="16" font-weight="bold">✦</text>
+  <!-- Window frame -->
+  <rect x="8" y="8" width="112" height="112" fill="url(#window)" rx="12"/>
+  
+  <!-- Title bar -->
+  <rect x="8" y="8" width="112" height="24" fill="#2c2c2e" rx="12"/>
+  <rect x="8" y="26" width="112" height="6" fill="#2c2c2e"/>
+  
+  <!-- Traffic lights -->
+  <circle cx="20" cy="20" r="6" fill="#ff5f57"/>
+  <circle cx="36" cy="20" r="6" fill="#febc2e"/>
+  <circle cx="52" cy="20" r="6" fill="#28c840"/>
+  
+  <!-- 4 Quadrant Panels -->
+  <!-- Top Left - Blue pen doodle -->
+  <rect x="12" y="38" width="48" height="38" fill="#1a1a2e" rx="4"/>
+  <path d="M20 50 Q28 45 32 55 Q36 65 44 60" stroke="#007aff" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <circle cx="40" cy="48" r="4" fill="#007aff"/>
+  
+  <!-- Top Right - Green shapes -->
+  <rect x="68" y="38" width="48" height="38" fill="#1a1a2e" rx="4"/>
+  <rect x="76" y="50" width="12" height="12" fill="#34c759" rx="2"/>
+  <circle cx="100" cy="56" r="8" fill="#34c759" opacity="0.6"/>
+  <path d="M82 68 L98 68" stroke="#34c759" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Bottom Left - Yellow creative -->
+  <rect x="12" y="82" width="48" height="34" fill="#1a1a2e" rx="4"/>
+  <path d="M20 95 L28 88 L36 98 L44 92" stroke="#febc2e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="26" cy="106" r="5" fill="none" stroke="#febc2e" stroke-width="2"/>
+  <text x="36" y="108" fill="#febc2e" font-size="14" font-weight="bold">✦</text>
+  
+  <!-- Bottom Right - Purple art -->
+  <rect x="68" y="82" width="48" height="34" fill="#1a1a2e" rx="4"/>
+  <ellipse cx="88" cy="99" rx="10" ry="8" fill="#bf5af2" opacity="0.8"/>
+  <path d="M100 92 Q108 98 104 108" stroke="#bf5af2" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <circle cx="102" cy="106" r="3" fill="#bf5af2"/>
+  
+  <!-- Pen/pencil icon overlay -->
+  <path d="M108 16 L116 8 L120 12 L112 20 Z" fill="#f59e0b"/>
+  <path d="M112 20 L108 24" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
 </svg>

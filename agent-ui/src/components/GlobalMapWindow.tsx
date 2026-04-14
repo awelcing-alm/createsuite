@@ -36,6 +36,10 @@ interface GlobalMapWindowProps {
   messages: GlobalMapMessage[];
   maxAgentSkills?: number;
   maxRecentMessages?: number;
+  minimized?: boolean;
+  maximized?: boolean;
+  onMinimize?: () => void;
+  onMaximize?: () => void;
 }
 
 // Animations
@@ -44,14 +48,14 @@ const fadeIn = keyframes`
   to { opacity: 1; transform: scale(1); }
 `;
 
-const pulse = keyframes`
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.1); opacity: 0.8; }
-`;
-
 const float = keyframes`
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px); }
+`;
+
+const pulse = keyframes`
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
 `;
 
 // Styled Components

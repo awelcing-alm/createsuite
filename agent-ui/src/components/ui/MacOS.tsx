@@ -346,7 +346,9 @@ export const DockItem = styled.button<{ $active?: boolean }>`
     ? 'rgba(255, 255, 255, 0.3)' 
     : 'rgba(255, 255, 255, 0.1)'};
   cursor: pointer;
-  transition: ${macosTheme.transitions.fast};
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              background 0.15s ease,
+              box-shadow 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -355,16 +357,46 @@ export const DockItem = styled.button<{ $active?: boolean }>`
   &:hover {
     transform: translateY(-8px) scale(1.15);
     background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(-4px) scale(1.1);
   }
   
   img, svg {
     width: 38px;
     height: 38px;
     object-fit: contain;
+    transition: transform 0.2s ease;
+  }
+  
+  &:hover img, &:hover svg {
+    transform: scale(1.05);
+  }
+  
+  &:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    font-family: ${macosTheme.fonts.system};
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    animation: ${fadeIn} 0.15s ease-out forwards;
+    z-index: 100000;
   }
   
   ${props => props.$active && css`
-    &::after {
+    &::before {
       content: '';
       position: absolute;
       bottom: -4px;

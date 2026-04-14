@@ -1,10 +1,12 @@
-import React, { useRef, useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Tldraw } from 'tldraw';
+import { useSyncDemo } from '@tldraw/sync';
+import 'tldraw/tldraw.css';
 import styled, { keyframes } from 'styled-components';
 import Draggable from 'react-draggable';
 import { macosTheme } from '../theme/macos';
-import { X, Minus, Maximize2 } from 'lucide-react';
+import { Users, X, Minus, Maximize2 } from 'lucide-react';
 
-// Animations
 const fadeIn = keyframes`
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
@@ -15,7 +17,6 @@ const minimizeOut = keyframes`
   to { opacity: 0.3; transform: scale(0.95) translateY(20px); }
 `;
 
-// Styled Components
 const WindowWrapper = styled.div<{ $minimized?: boolean }>`
   position: absolute;
   animation: ${fadeIn} 0.2s ease-out;
@@ -27,11 +28,11 @@ const WindowWrapper = styled.div<{ $minimized?: boolean }>`
 `;
 
 const Window = styled.div<{ $active?: boolean; $maximized?: boolean }>`
-  width: ${props => props.$maximized ? '100vw' : 'min(600px, calc(100vw - 100px))'};
-  height: ${props => props.$maximized ? 'calc(100vh - 108px)' : 'min(400px, calc(100vh - 100px))'};
-  min-width: ${props => props.$maximized ? 'unset' : '300px'};
-  min-height: ${props => props.$maximized ? 'unset' : '200px'};
-  background: rgba(40, 40, 45, 0.95);
+  width: ${props => props.$maximized ? '100vw' : '1000px'};
+  height: ${props => props.$maximized ? 'calc(100vh - 108px)' : '750px'};
+  min-width: ${props => props.$maximized ? 'unset' : '800px'};
+  min-height: ${props => props.$maximized ? 'unset' : '600px'};
+  background: #1e1e1e;
   border-radius: ${props => props.$maximized ? '0' : '10px'};
   overflow: hidden;
   box-shadow: ${props => props.$active 
@@ -119,23 +120,92 @@ const Title = styled.div`
   font-size: 13px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.85);
-`;
-
-const ContentArea = styled.div`
-  flex: 1;
   display: flex;
-  justify-content: center;
   align-items: center;
-  overflow: auto;
-  background: white;
-  padding: 8px;
+  justify-content: center;
+  gap: 8px;
 `;
 
-interface ContentWindowProps {
+const RoomIdInput = styled.input`
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: white;
+  font-family: ${macosTheme.fonts.mono};
+  font-size: 12px;
+  width: 120px;
+  outline: none;
+  
+  &:focus {
+    border-color: #007aff;
+  }
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+  }
+`;
+
+const QuadGrid = styled.div`
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+`;
+
+const QuadPanel = styled.div`
+  position: relative;
+  background: #1a1a1a;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+`;
+
+const PanelHeader = styled.div`
+  height: 28px;
+  background: rgba(30, 30, 35, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const PanelLabel = styled.span`
+  font-family: ${macosTheme.fonts.system};
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+const UserCount = styled.span`
+  font-family: ${macosTheme.fonts.system};
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const BoardContainer = styled.div`
+  flex: 1;
+  position: relative;
+  background: #1a1a1a;
+  
+  .tl-container {
+    width: 100% !important;
+    height: 100% !important;
+  }
+`;
+
+interface QuadBoardWindowProps {
   id: string;
   title: string;
-  type: 'image' | 'browser';
-  content: string;
   onClose: (id: string) => void;
   zIndex: number;
   onFocus: (id: string) => void;
@@ -146,15 +216,15 @@ interface ContentWindowProps {
   onMaximize?: () => void;
 }
 
-const ContentWindow: React.FC<ContentWindowProps> = ({ 
+const panelLabels = ['Top Left', 'Top Right', 'Bottom Left', 'Bottom Right'];
+
+const QuadBoardWindow: React.FC<QuadBoardWindowProps> = ({ 
   id, 
   title, 
-  type,
-  content,
   onClose, 
   zIndex, 
   onFocus,
-  initialPosition = { x: 50, y: 50 },
+  initialPosition = { x: 30, y: 30 },
   minimized = false,
   maximized = false,
   onMinimize,
@@ -162,6 +232,14 @@ const ContentWindow: React.FC<ContentWindowProps> = ({
 }) => {
   const nodeRef = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState(true);
+  const [roomId, setRoomId] = useState(() => {
+    const stored = localStorage.getItem(`createsuite-quad-room-${id}`);
+    return stored || `quad-${id.slice(0, 8)}`;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(`createsuite-quad-room-${id}`, roomId);
+  }, [roomId, id]);
 
   const handleFocus = () => {
     setIsActive(true);
@@ -169,7 +247,7 @@ const ContentWindow: React.FC<ContentWindowProps> = ({
   };
 
   if (minimized) {
-    return null; // Don't render minimized windows - they show in the dock
+    return null;
   }
 
   return (
@@ -207,35 +285,55 @@ const ContentWindow: React.FC<ContentWindowProps> = ({
                 <Maximize2 size={6} strokeWidth={2.5} />
               </TrafficLight>
             </TrafficLights>
-            <Title>{title}</Title>
-            <div style={{ width: 52 }} />
+            <Title>
+              <Users size={14} />
+              {title}
+            </Title>
+            <RoomIdInput 
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              placeholder="room-id"
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            />
           </TitleBar>
           
-          <ContentArea>
-            {type === 'image' && (
-              <img 
-                src={content} 
-                alt={title} 
-                style={{ 
-                  maxWidth: '100%', 
-                  maxHeight: '100%', 
-                  objectFit: 'contain' 
-                }} 
-              />
-            )}
-            {type === 'browser' && (
-              <iframe 
-                src={content} 
-                style={{ width: '100%', height: '100%', border: 'none' }} 
-                title={title}
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-              />
-            )}
-          </ContentArea>
+          <QuadGrid onMouseDown={(e) => e.stopPropagation()}>
+            {[0, 1, 2, 3].map((panelIndex) => (
+              <QuadPanel key={panelIndex}>
+                <PanelHeader>
+                  <PanelLabel>{panelLabels[panelIndex]}</PanelLabel>
+                  <UserCount>
+                    <Users size={10} />
+                    Join: {roomId}-{panelIndex}
+                  </UserCount>
+                </PanelHeader>
+                <BoardContainer>
+                  <CollaborativeBoard 
+                    roomId={`${roomId}-${panelIndex}`} 
+                  />
+                </BoardContainer>
+              </QuadPanel>
+            ))}
+          </QuadGrid>
         </Window>
       </WindowWrapper>
     </Draggable>
   );
 };
 
-export default ContentWindow;
+interface CollaborativeBoardProps {
+  roomId: string;
+}
+
+const CollaborativeBoard: React.FC<CollaborativeBoardProps> = ({ roomId }) => {
+  const store = useSyncDemo({ roomId });
+  
+  return (
+    <Tldraw 
+      store={store}
+    />
+  );
+};
+
+export default QuadBoardWindow;

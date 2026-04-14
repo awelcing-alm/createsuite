@@ -1,15 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import { v4 as uuidv4 } from 'uuid';
 import TerminalWindow from './components/TerminalWindow';
 import ContentWindow from './components/ContentWindow';
-import GlobalMapWindow from './components/GlobalMapWindow';
 import type { GlobalMapAgent, GlobalMapMessage } from './components/GlobalMapWindow';
-import SystemMonitor from './components/SystemMonitor';
 import LifecycleNotification from './components/LifecycleNotification';
 import SetupWizard from './components/SetupWizard';
-import AgentDashboard from './components/AgentDashboard';
 import GaussianBackground from './components/GaussianBackground';
+import { usePhoenixChannel } from './hooks/usePhoenixChannel';
 import { macosTheme } from './theme/macos';
 import { 
   Dock, 
@@ -32,6 +30,13 @@ import {
   Battery,
   Search
 } from 'lucide-react';
+
+// Lazy load heavy components for code splitting
+const AgentDashboard = lazy(() => import('./components/AgentDashboard'));
+const TldrawWindow = lazy(() => import('./components/TldrawWindow'));
+const QuadBoardWindow = lazy(() => import('./components/QuadBoardWindow'));
+const GlobalMapWindow = lazy(() => import('./components/GlobalMapWindow'));
+const SystemMonitor = lazy(() => import('./components/SystemMonitor'));
 
 // UI Command payload type
 export interface UiCommandPayload {
@@ -82,41 +87,52 @@ const AppleLogo = () => (
   </svg>
 );
 
+
 interface BaseWindow {
   id: string;
   title: string;
   zIndex: number;
   position: { x: number; y: number };
+  minimized?: boolean;
+  maximized?: boolean;
 }
 
-interface TerminalState extends BaseWindow {
+export interface TerminalState extends BaseWindow {
   type: 'terminal';
   initialCommand?: string;
 }
 
-interface ImageState extends BaseWindow {
+export interface ImageState extends BaseWindow {
   type: 'image';
   content: string;
 }
 
-interface BrowserState extends BaseWindow {
+export interface BrowserState extends BaseWindow {
   type: 'browser';
   content: string;
 }
 
-interface GlobalMapState extends BaseWindow {
+export interface GlobalMapState extends BaseWindow {
   type: 'global-map';
 }
 
-interface SystemMonitorState extends BaseWindow {
+export interface SystemMonitorState extends BaseWindow {
   type: 'system-monitor';
 }
 
-interface AgentDashboardState extends BaseWindow {
+export interface AgentDashboardState extends BaseWindow {
   type: 'agent-dashboard';
 }
 
-type WindowState = TerminalState | ImageState | BrowserState | GlobalMapState | SystemMonitorState | AgentDashboardState;
+export interface TldrawState extends BaseWindow {
+  type: 'tldraw';
+}
+
+export interface QuadBoardState extends BaseWindow {
+  type: 'quad-board';
+}
+
+type WindowState = TerminalState | ImageState | BrowserState | GlobalMapState | SystemMonitorState | AgentDashboardState | TldrawState | QuadBoardState;
 
 const isDemoRoute = () => {
   const path = window.location.pathname;
@@ -124,6 +140,7 @@ const isDemoRoute = () => {
 };
 
 const App: React.FC = () => {
+  const phoenixVisualState = usePhoenixChannel();
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [topZIndex, setTopZIndex] = useState(1);
@@ -145,7 +162,7 @@ const App: React.FC = () => {
   }, []);
 
   const spawnWindow = (
-    type: 'terminal' | 'image' | 'browser' | 'global-map' | 'system-monitor' | 'agent-dashboard',
+    type: 'terminal' | 'image' | 'browser' | 'global-map' | 'system-monitor' | 'agent-dashboard' | 'tldraw' | 'quad-board',
     title: string,
     contentOrCommand?: string,
     customPosition?: { x: number, y: number }
@@ -180,6 +197,10 @@ const App: React.FC = () => {
         return [...prev, { ...base, type: 'system-monitor' }];
       } else if (type === 'agent-dashboard') {
         return [...prev, { ...base, type: 'agent-dashboard' }];
+      } else if (type === 'tldraw') {
+        return [...prev, { ...base, type: 'tldraw' }];
+      } else if (type === 'quad-board') {
+        return [...prev, { ...base, type: 'quad-board' }];
       }
       return [...prev, { ...base, type: 'global-map' }];
     });
@@ -197,6 +218,20 @@ const App: React.FC = () => {
 
   const closeWindow = (id: string) => {
     setWindows(prev => prev.filter(t => t.id !== id));
+  };
+
+  const minimizeWindow = (id: string) => {
+    setWindows(prev => prev.map(t => t.id === id ? { ...t, minimized: true, maximized: false } : t));
+  };
+
+  const maximizeWindow = (id: string) => {
+    setWindows(prev => prev.map(t => t.id === id ? { ...t, maximized: !t.maximized, minimized: false } : t));
+  };
+
+  const restoreWindow = (id: string) => {
+    const newZ = topZIndex + 1;
+    setTopZIndex(newZ);
+    setWindows(prev => prev.map(t => t.id === id ? { ...t, minimized: false, zIndex: newZ } : t));
   };
 
   const focusWindow = (id: string) => {
@@ -381,7 +416,7 @@ const App: React.FC = () => {
     };
 
     fetchGlobalData();
-    const interval = window.setInterval(fetchGlobalData, 4000);
+    const interval = window.setInterval(fetchGlobalData, 30000);
 
     return () => {
       isMounted = false;
@@ -408,7 +443,7 @@ const App: React.FC = () => {
   return (
     <>
       <GlobalStyles />
-      <GaussianBackground />
+      <GaussianBackground visualState={phoenixVisualState} />
       
       {/* macOS Menu Bar */}
       <MenuBar>
@@ -539,8 +574,12 @@ const App: React.FC = () => {
                 title={win.title}
                 initialPosition={win.position}
                 zIndex={win.zIndex}
+                minimized={win.minimized}
+                maximized={win.maximized}
                 onClose={() => closeWindow(win.id)}
                 onFocus={() => focusWindow(win.id)}
+                onMinimize={() => minimizeWindow(win.id)}
+                onMaximize={() => maximizeWindow(win.id)}
                 onUiCommand={handleUiCommand}
                 initialCommand={win.initialCommand}
               />
@@ -556,8 +595,12 @@ const App: React.FC = () => {
                 content={win.content}
                 initialPosition={win.position}
                 zIndex={win.zIndex}
+                minimized={win.minimized}
+                maximized={win.maximized}
                 onClose={() => closeWindow(win.id)}
                 onFocus={() => focusWindow(win.id)}
+                onMinimize={() => minimizeWindow(win.id)}
+                onMaximize={() => maximizeWindow(win.id)}
               />
             );
           }
@@ -571,51 +614,111 @@ const App: React.FC = () => {
                 content={win.content}
                 initialPosition={win.position}
                 zIndex={win.zIndex}
+                minimized={win.minimized}
+                maximized={win.maximized}
                 onClose={() => closeWindow(win.id)}
                 onFocus={() => focusWindow(win.id)}
+                onMinimize={() => minimizeWindow(win.id)}
+                onMaximize={() => maximizeWindow(win.id)}
               />
             );
           }
           if (win.type === 'global-map') {
             return (
-              <GlobalMapWindow
-                key={win.id}
-                id={win.id}
-                title={win.title}
-                initialPosition={win.position}
-                zIndex={win.zIndex}
-                onClose={() => closeWindow(win.id)}
-                onFocus={() => focusWindow(win.id)}
-                agents={globalAgents}
-                messages={globalMessages}
-              />
+              <Suspense fallback={null}>
+                <GlobalMapWindow
+                  key={win.id}
+                  id={win.id}
+                  title={win.title}
+                  initialPosition={win.position}
+                  zIndex={win.zIndex}
+                  minimized={win.minimized}
+                  maximized={win.maximized}
+                  onClose={() => closeWindow(win.id)}
+                  onFocus={() => focusWindow(win.id)}
+                  onMinimize={() => minimizeWindow(win.id)}
+                  onMaximize={() => maximizeWindow(win.id)}
+                  agents={globalAgents}
+                  messages={globalMessages}
+                />
+              </Suspense>
             );
           }
           if (win.type === 'system-monitor') {
             return (
-              <SystemMonitor
-                key={win.id}
-                id={win.id}
-                title={win.title}
-                initialPosition={win.position}
-                zIndex={win.zIndex}
-                onClose={() => closeWindow(win.id)}
-                onFocus={() => focusWindow(win.id)}
-              />
+              <Suspense fallback={null}>
+                <SystemMonitor
+                  key={win.id}
+                  id={win.id}
+                  title={win.title}
+                  initialPosition={win.position}
+                  zIndex={win.zIndex}
+                  minimized={win.minimized}
+                  maximized={win.maximized}
+                  onClose={() => closeWindow(win.id)}
+                  onFocus={() => focusWindow(win.id)}
+                  onMinimize={() => minimizeWindow(win.id)}
+                  onMaximize={() => maximizeWindow(win.id)}
+                />
+              </Suspense>
             );
           }
           if (win.type === 'agent-dashboard') {
             return (
-              <AgentDashboard
-                key={win.id}
-                id={win.id}
-                title={win.title}
-                initialPosition={win.position}
-                zIndex={win.zIndex}
-                onClose={() => closeWindow(win.id)}
-                onFocus={() => focusWindow(win.id)}
-                serverUrl={window.location.origin}
-              />
+              <Suspense fallback={null}>
+                <AgentDashboard
+                  key={win.id}
+                  id={win.id}
+                  title={win.title}
+                  initialPosition={win.position}
+                  zIndex={win.zIndex}
+                  minimized={win.minimized}
+                  maximized={win.maximized}
+                  onClose={() => closeWindow(win.id)}
+                  onFocus={() => focusWindow(win.id)}
+                  onMinimize={() => minimizeWindow(win.id)}
+                  onMaximize={() => maximizeWindow(win.id)}
+                  serverUrl={window.location.origin}
+                />
+              </Suspense>
+            );
+          }
+          if (win.type === 'tldraw') {
+            return (
+              <Suspense fallback={null}>
+                <TldrawWindow
+                  key={win.id}
+                  id={win.id}
+                  title={win.title}
+                  initialPosition={win.position}
+                  zIndex={win.zIndex}
+                  minimized={win.minimized}
+                  maximized={win.maximized}
+                  onClose={() => closeWindow(win.id)}
+                  onFocus={() => focusWindow(win.id)}
+                  onMinimize={() => minimizeWindow(win.id)}
+                  onMaximize={() => maximizeWindow(win.id)}
+                />
+              </Suspense>
+            );
+          }
+          if (win.type === 'quad-board') {
+            return (
+              <Suspense fallback={null}>
+                <QuadBoardWindow
+                  key={win.id}
+                  id={win.id}
+                  title={win.title}
+                  initialPosition={win.position}
+                  zIndex={win.zIndex}
+                  minimized={win.minimized}
+                  maximized={win.maximized}
+                  onClose={() => closeWindow(win.id)}
+                  onFocus={() => focusWindow(win.id)}
+                  onMinimize={() => minimizeWindow(win.id)}
+                  onMaximize={() => maximizeWindow(win.id)}
+                />
+              </Suspense>
             );
           }
           return null;
@@ -687,6 +790,21 @@ const App: React.FC = () => {
         
         <DockDivider />
         
+        {windows.filter(w => w.minimized).map(win => (
+          <DockItem 
+            key={win.id}
+            title={win.title}
+            onClick={() => restoreWindow(win.id)}
+          >
+            <svg viewBox="0 0 32 32">
+              <rect width="32" height="32" rx="7" fill="#666"/>
+              <text x="16" y="20" textAnchor="middle" fill="white" fontSize="12">{win.title.charAt(0)}</text>
+            </svg>
+          </DockItem>
+        ))}
+
+        {windows.filter(w => w.minimized).length > 0 && <DockDivider />}
+        
         <DockItem 
           $active={windows.some(w => w.type === 'global-map')}
           title="Agent Village"
@@ -714,6 +832,32 @@ const App: React.FC = () => {
           <svg viewBox="0 0 32 32">
             <rect width="32" height="32" rx="7" fill="#333"/>
             <path d="M6 20l5-8 4 5 6-10 5 13" stroke="#00FF00" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </DockItem>
+
+        <DockItem 
+          $active={windows.some(w => w.type === 'tldraw')}
+          title="Draw"
+          onClick={() => spawnWindow('tldraw', 'Drawing Canvas')}
+        >
+          <svg viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="7" fill="#f59e0b"/>
+            <path d="M8 24l4-16 4 4-2 8 6-6 2 10-14-2 4 2-4-2z" fill="white"/>
+            <circle cx="24" cy="8" r="4" fill="white"/>
+          </svg>
+        </DockItem>
+
+        <DockItem 
+          $active={windows.some(w => w.type === 'quad-board')}
+          title="Quad Board"
+          onClick={() => spawnWindow('quad-board', 'Quad Collaborative Board')}
+        >
+          <svg viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="7" fill="#8b5cf6"/>
+            <rect x="3" y="3" width="12" height="12" rx="2" fill="white" opacity="0.8"/>
+            <rect x="17" y="3" width="12" height="12" rx="2" fill="white" opacity="0.8"/>
+            <rect x="3" y="17" width="12" height="12" rx="2" fill="white" opacity="0.8"/>
+            <rect x="17" y="17" width="12" height="12" rx="2" fill="white" opacity="0.8"/>
           </svg>
         </DockItem>
         

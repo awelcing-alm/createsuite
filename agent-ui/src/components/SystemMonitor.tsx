@@ -208,6 +208,10 @@ interface SystemMonitorProps {
   initialPosition: { x: number; y: number };
   onClose: (id: string) => void;
   onFocus: (id: string) => void;
+  minimized?: boolean;
+  maximized?: boolean;
+  onMinimize?: () => void;
+  onMaximize?: () => void;
 }
 
 const SystemMonitor: React.FC<SystemMonitorProps> = ({

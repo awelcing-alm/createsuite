@@ -19,26 +19,42 @@ const fadeIn = keyframes`
   to { opacity: 1; transform: scale(1); }
 `;
 
-// macOS Window Styles
-const WindowWrapper = styled.div`
-  position: absolute;
-  animation: ${fadeIn} 0.2s ease-out;
+const minimizeOut = keyframes`
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0.3; transform: scale(0.95) translateY(20px); }
 `;
 
-const Window = styled.div<{ $active?: boolean }>`
-  width: 600px;
-  height: 400px;
-  min-width: 400px;
-  min-height: 250px;
+// macOS Window Styles
+const WindowWrapper = styled.div<{ $minimized?: boolean }>`
+  position: absolute;
+  animation: ${fadeIn} 0.2s ease-out;
+  
+  ${props => props.$minimized && `
+    animation: ${minimizeOut} 0.3s ease-out forwards;
+    pointer-events: none;
+  `}
+`;
+
+const Window = styled.div<{ $active?: boolean; $maximized?: boolean }>`
+  width: ${props => props.$maximized ? '100vw' : '600px'};
+  height: ${props => props.$maximized ? 'calc(100vh - 108px)' : '400px'};
+  min-width: ${props => props.$maximized ? 'unset' : '400px'};
+  min-height: ${props => props.$maximized ? 'unset' : '250px'};
   background: #1e1e1e;
-  border-radius: 10px;
+  border-radius: ${props => props.$maximized ? '0' : '10px'};
   overflow: hidden;
   box-shadow: ${props => props.$active 
     ? '0 22px 70px 4px rgba(0, 0, 0, 0.56), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset'
     : '0 10px 30px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset'};
   display: flex;
   flex-direction: column;
-  transition: box-shadow 0.2s ease;
+  transition: all 0.25s ease;
+  
+  ${props => props.$maximized && `
+    position: fixed;
+    top: 28px;
+    left: 0;
+  `}
 `;
 
 const TitleBar = styled.div<{ $active?: boolean }>`
@@ -181,6 +197,10 @@ interface TerminalWindowProps {
   zIndex: number;
   onFocus: (id: string) => void;
   initialPosition?: { x: number; y: number };
+  minimized?: boolean;
+  maximized?: boolean;
+  onMinimize?: () => void;
+  onMaximize?: () => void;
   initialCommand?: string;
   onUiCommand?: (command: UiCommandPayload) => void;
 }
@@ -192,6 +212,10 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
   zIndex, 
   onFocus,
   initialPosition = { x: 50, y: 50 },
+  minimized = false,
+  maximized = false,
+  onMinimize,
+  onMaximize,
   initialCommand,
   onUiCommand
 }) => {
@@ -310,15 +334,21 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
     onFocus(id);
   };
 
+  if (minimized) {
+    return null; // Don't render minimized windows - they show in the dock
+  }
+
   return (
     <Draggable
       nodeRef={nodeRef}
       handle=".title-bar"
-      defaultPosition={initialPosition}
+      defaultPosition={maximized ? { x: 0, y: 0 } : initialPosition}
+      position={maximized ? { x: 0, y: 0 } : undefined}
+      disabled={maximized}
       onMouseDown={handleFocus}
     >
-      <WindowWrapper ref={nodeRef} style={{ zIndex }}>
-        <Window $active={isActive} onMouseDown={handleFocus}>
+      <WindowWrapper ref={nodeRef} style={{ zIndex }} $minimized={minimized}>
+        <Window $active={isActive} $maximized={maximized} onMouseDown={handleFocus}>
           <TitleBar className="title-bar" $active={isActive}>
             <TrafficLights>
               <TrafficLight 
@@ -331,14 +361,14 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
               <TrafficLight 
                 $color="minimize" 
                 $active={isActive}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); onMinimize?.(); }}
               >
                 <Minus size={8} strokeWidth={2.5} />
               </TrafficLight>
               <TrafficLight 
                 $color="maximize" 
                 $active={isActive}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); onMaximize?.(); }}
               >
                 <Maximize2 size={6} strokeWidth={2.5} />
               </TrafficLight>

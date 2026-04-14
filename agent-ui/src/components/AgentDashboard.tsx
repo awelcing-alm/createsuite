@@ -43,6 +43,10 @@ interface AgentDashboardProps {
   onClose: (id: string) => void;
   onFocus: (id: string) => void;
   serverUrl: string;
+  minimized?: boolean;
+  maximized?: boolean;
+  onMinimize?: () => void;
+  onMaximize?: () => void;
 }
 
 // ==================== ANIMATIONS ====================
