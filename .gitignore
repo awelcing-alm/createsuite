@@ -168,3 +168,17 @@ agent-ui/test-results/
 
 # Temporary design assets
 cacti-*.png
+
+# OpenCode session transcripts
+session-*.md
+
+# Test proof screenshots
+convoy-test-proof.png
+
+# Bun lockfile (project uses npm/package-lock.json)
+bun.lock
+agent-ui/bun.lock
+
+# Unused 3D asset files
+agent-ui/public/splats/
+*.ply

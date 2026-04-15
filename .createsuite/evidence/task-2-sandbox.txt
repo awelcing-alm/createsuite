@@ -1,8 +1,0 @@
-    warning: redefining module BackendWeb.ConnCase (current version loaded from Elixir.BackendWeb.ConnCase.beam)
-    │
-  1 │ defmodule BackendWeb.ConnCase do
-    │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    │
-    └─ test/support/conn_case.ex:1: BackendWeb.ConnCase (module)
-
-There are no tests to run
