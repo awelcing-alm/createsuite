@@ -44,9 +44,10 @@
   "license": "MIT",
   "dependencies": {
     "@remotion/cli": "^4.0.410",
+    "@types/prompts": "^2.4.9",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
-    "inquirer": "^8.2.6",
+    "prompts": "^2.4.2",
     "simple-git": "^3.22.0",
     "uuid": "^9.0.1"
   },
@@ -54,7 +55,6 @@
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.59.1",
-    "@types/inquirer": "^8.2.10",
     "@types/node": "^22.0.0",
     "@types/uuid": "^9.0.7",
     "@vitest/coverage-v8": "^4.1.4",

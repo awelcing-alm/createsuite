@@ -66,15 +66,13 @@ program
         chalk.gray('This will configure connections to Z.ai, Claude, OpenAI, MiniMax, and more.\n')
       );
 
-      const inquirer = (await import('inquirer')).default;
-      const { setupProviders } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'setupProviders',
-          message: 'Would you like to set up your AI providers now?',
-          default: true,
-        },
-      ]);
+      const prompts = (await import('prompts')).default;
+      const { setupProviders } = await prompts({
+        type: 'confirm',
+        name: 'setupProviders',
+        message: 'Would you like to set up your AI providers now?',
+        initial: true,
+      });
 
       if (setupProviders) {
         const providerManager = new ProviderManager(workspaceRoot);

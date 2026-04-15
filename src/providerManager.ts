@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import inquirer from 'inquirer';
+import prompts from 'prompts';
 import chalk from 'chalk';
 import { spawn } from 'child_process';
 import { LocalhostOAuth } from './localhostOAuth';
@@ -110,14 +110,12 @@ export class ProviderManager {
     const opencodeInstalled = await this.isOpencodeInstalled();
     if (!opencodeInstalled) {
       console.log(chalk.yellow('⚠️  OpenCode is not installed.'));
-      const { shouldInstall } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'shouldInstall',
-          message: 'Would you like installation instructions?',
-          default: true,
-        },
-      ]);
+      const { shouldInstall } = await prompts({
+        type: 'confirm',
+        name: 'shouldInstall',
+        message: 'Would you like installation instructions?',
+        initial: true,
+      });
 
       if (shouldInstall) {
         await this.installOpencode();
@@ -131,25 +129,23 @@ export class ProviderManager {
     console.log(chalk.bold.cyan('\n📋 Choose Your Providers\n'));
 
     const providerChoices = [
-      { name: '🔷 Z.ai GLM 4.7 (coding plan)', value: Provider.ZAI_GLM },
-      { name: '🟣 Claude Opus/Sonnet 4.5', value: Provider.CLAUDE },
-      { name: '🟢 OpenAI GPT-5.2', value: Provider.OPENAI },
-      { name: '🔵 MiniMax 2.1', value: Provider.MINIMAX },
-      { name: '🔴 Google Gemini 3 Pro', value: Provider.GEMINI },
-      { name: '🐙 GitHub Copilot', value: Provider.GITHUB_COPILOT },
-      { name: '🧘 OpenCode Zen', value: Provider.OPENCODE_ZEN },
-      { name: '🤗 Hugging Face Inference (assets)', value: Provider.HUGGINGFACE },
+      { title: '🔷 Z.ai GLM 4.7 (coding plan)', value: Provider.ZAI_GLM },
+      { title: '🟣 Claude Opus/Sonnet 4.5', value: Provider.CLAUDE },
+      { title: '🟢 OpenAI GPT-5.2', value: Provider.OPENAI },
+      { title: '🔵 MiniMax 2.1', value: Provider.MINIMAX },
+      { title: '🔴 Google Gemini 3 Pro', value: Provider.GEMINI },
+      { title: '🐙 GitHub Copilot', value: Provider.GITHUB_COPILOT },
+      { title: '🧘 OpenCode Zen', value: Provider.OPENCODE_ZEN },
+      { title: '🤗 Hugging Face Inference (assets)', value: Provider.HUGGINGFACE },
     ];
 
-    const { selectedProviders } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'selectedProviders',
-        message: 'Select all providers you want to enable:',
-        choices: providerChoices,
-        pageSize: providerChoices.length,
-      },
-    ]);
+    const { selectedProviders } = await prompts({
+      type: 'multiselect',
+      name: 'selectedProviders',
+      message: 'Select all providers you want to enable:',
+      choices: providerChoices,
+      instructions: false,
+    });
 
     const providers: ProviderConfig[] = [];
 
@@ -157,15 +153,16 @@ export class ProviderManager {
 
     let claudeModel = 'anthropic/claude-opus-4.5';
     if (shouldInclude(Provider.CLAUDE)) {
-      const { claudeTier } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'claudeTier',
-          message: 'Claude tier:',
-          choices: ['Pro', 'Max (20x mode)'],
-          default: 'Pro',
-        },
-      ]);
+      const { claudeTier } = await prompts({
+        type: 'select',
+        name: 'claudeTier',
+        message: 'Claude tier:',
+        choices: [
+          { title: 'Pro', value: 'Pro' },
+          { title: 'Max (20x mode)', value: 'Max (20x mode)' },
+        ],
+        initial: 0,
+      });
       claudeModel =
         claudeTier === 'Max (20x mode)'
           ? 'anthropic/claude-opus-4.5-max20'
@@ -263,14 +260,12 @@ export class ProviderManager {
     // Authentication steps
     console.log(chalk.bold.cyan('\n🔐 Next: Authenticate Your Providers\n'));
 
-    const { shouldAuth } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'shouldAuth',
-        message: 'Would you like to authenticate your providers now?',
-        default: true,
-      },
-    ]);
+    const { shouldAuth } = await prompts({
+      type: 'confirm',
+      name: 'shouldAuth',
+      message: 'Would you like to authenticate your providers now?',
+      initial: true,
+    });
 
     if (shouldAuth) {
       await this.authenticateProviders(providers);
@@ -355,14 +350,12 @@ export class ProviderManager {
 
     await this.runOpencodeAuth('Anthropic');
 
-    const { completed } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'completed',
-        message: 'Have you completed the authentication?',
-        default: false,
-      },
-    ]);
+    const { completed } = await prompts({
+      type: 'confirm',
+      name: 'completed',
+      message: 'Have you completed the authentication?',
+      initial: false,
+    });
 
     if (completed) {
       console.log(chalk.green('✓ Claude authentication complete'));
@@ -376,18 +369,16 @@ export class ProviderManager {
   private async authenticateOpenAI(): Promise<boolean> {
     console.log(chalk.bold.blue('\n🟢 OpenAI Authentication\n'));
 
-    const { method } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'method',
-        message: 'Choose authentication method:',
-        choices: [
-          { name: '🔑 API Key (Recommended)', value: 'api-key' },
-          { name: '🌐 OAuth Flow (Browser)', value: 'oauth' },
-        ],
-        default: 'api-key',
-      },
-    ]);
+    const { method } = await prompts({
+      type: 'select',
+      name: 'method',
+      message: 'Choose authentication method:',
+      choices: [
+        { title: '🔑 API Key (Recommended)', value: 'api-key' },
+        { title: '🌐 OAuth Flow (Browser)', value: 'oauth' },
+      ],
+      initial: 0,
+    });
 
     if (method === 'api-key') {
       return await this.authenticateOpenAIWithAPIKey();
@@ -402,7 +393,7 @@ export class ProviderManager {
     console.log(chalk.gray('\n📝 Enter your OpenAI API key'));
     console.log(chalk.gray('Get your API key from: https://platform.openai.com/api-keys\n'));
 
-    const { apiKey, confirm } = await inquirer.prompt([
+    const { apiKey, confirm } = await prompts([
       {
         type: 'password',
         name: 'apiKey',
@@ -421,7 +412,7 @@ export class ProviderManager {
         type: 'confirm',
         name: 'confirm',
         message: 'Save this API key securely?',
-        default: true,
+        initial: true,
       },
     ]);
 
@@ -485,14 +476,12 @@ export class ProviderManager {
 
     await this.runOpencodeAuth('Google');
 
-    const { completed } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'completed',
-        message: 'Have you completed the authentication?',
-        default: false,
-      },
-    ]);
+    const { completed } = await prompts({
+      type: 'confirm',
+      name: 'completed',
+      message: 'Have you completed the authentication?',
+      initial: false,
+    });
 
     if (completed) {
       console.log(chalk.green('✓ Gemini authentication complete'));
@@ -518,14 +507,12 @@ export class ProviderManager {
 
     await this.runOpencodeAuth('Z.ai');
 
-    const { completed } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'completed',
-        message: 'Have you completed the authentication?',
-        default: false,
-      },
-    ]);
+    const { completed } = await prompts({
+      type: 'confirm',
+      name: 'completed',
+      message: 'Have you completed the authentication?',
+      initial: false,
+    });
 
     if (completed) {
       console.log(chalk.green('✓ Z.ai authentication complete'));
@@ -547,14 +534,12 @@ export class ProviderManager {
       console.log(chalk.green('✓ MiniMax API key saved securely'));
     }
 
-    const { completed } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'completed',
-        message: 'Have you completed the authentication?',
-        default: false,
-      },
-    ]);
+    const { completed } = await prompts({
+      type: 'confirm',
+      name: 'completed',
+      message: 'Have you completed the authentication?',
+      initial: false,
+    });
 
     if (completed) {
       console.log(chalk.green('✓ MiniMax authentication complete'));
@@ -574,14 +559,12 @@ export class ProviderManager {
 
     await this.runOpencodeAuth('GitHub');
 
-    const { completed } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'completed',
-        message: 'Have you completed the authentication?',
-        default: false,
-      },
-    ]);
+    const { completed } = await prompts({
+      type: 'confirm',
+      name: 'completed',
+      message: 'Have you completed the authentication?',
+      initial: false,
+    });
 
     if (completed) {
       console.log(chalk.green('✓ GitHub Copilot authentication complete'));
@@ -598,14 +581,12 @@ export class ProviderManager {
     console.log(chalk.gray('  1. Ensure you have OpenCode Zen access'));
     console.log(chalk.gray('  2. Models are available with opencode/ prefix'));
 
-    const { completed } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'completed',
-        message: 'Have you completed the setup?',
-        default: false,
-      },
-    ]);
+    const { completed } = await prompts({
+      type: 'confirm',
+      name: 'completed',
+      message: 'Have you completed the setup?',
+      initial: false,
+    });
 
     if (completed) {
       console.log(chalk.green('✓ OpenCode Zen setup complete'));
@@ -630,14 +611,12 @@ export class ProviderManager {
 
     await this.runOpencodeAuth('Hugging Face');
 
-    const { completed } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'completed',
-        message: 'Have you completed the authentication?',
-        default: false,
-      },
-    ]);
+    const { completed } = await prompts({
+      type: 'confirm',
+      name: 'completed',
+      message: 'Have you completed the authentication?',
+      initial: false,
+    });
 
     if (completed) {
       console.log(chalk.green('✓ Hugging Face authentication complete'));
@@ -654,14 +633,12 @@ export class ProviderManager {
       return;
     }
 
-    const { runNow } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'runNow',
-        message: `Run "opencode auth login" now for ${providerLabel}?`,
-        default: true,
-      },
-    ]);
+    const { runNow } = await prompts({
+      type: 'confirm',
+      name: 'runNow',
+      message: `Run "opencode auth login" now for ${providerLabel}?`,
+      initial: true,
+    });
 
     if (!runNow) {
       return;
@@ -675,32 +652,28 @@ export class ProviderManager {
   }
 
   private async promptForApiKey(provider: Provider, label: string): Promise<boolean> {
-    const { wantsKey } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'wantsKey',
-        message: `Do you want to save a ${label} now?`,
-        default: false,
-      },
-    ]);
+    const { wantsKey } = await prompts({
+      type: 'confirm',
+      name: 'wantsKey',
+      message: `Do you want to save a ${label} now?`,
+      initial: false,
+    });
 
     if (!wantsKey) {
       return false;
     }
 
-    const { apiKey } = await inquirer.prompt([
-      {
-        type: 'password',
-        name: 'apiKey',
-        message: `${label}:`,
-        validate: input => {
-          if (!input || input.trim().length === 0) {
-            return 'Value is required';
-          }
-          return true;
-        },
+    const { apiKey } = await prompts({
+      type: 'password',
+      name: 'apiKey',
+      message: `${label}:`,
+      validate: input => {
+        if (!input || input.trim().length === 0) {
+          return 'Value is required';
+        }
+        return true;
       },
-    ]);
+    });
 
     this.storeProviderCredential(provider, apiKey.trim());
     return true;

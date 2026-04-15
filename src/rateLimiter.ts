@@ -115,5 +115,3 @@ export class RateLimiter {
     };
   }
 }
-
-export const defaultRateLimiter = new RateLimiter();
