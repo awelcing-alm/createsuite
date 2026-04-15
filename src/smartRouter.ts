@@ -27,7 +27,7 @@ export function analyzeComplexity(description: string): WorkflowType {
     'coordination',
     'parallel',
     'handoff',
-    'convoy'
+    'convoy',
   ];
 
   const complexKeywords = [
@@ -38,17 +38,10 @@ export function analyzeComplexity(description: string): WorkflowType {
     'integration',
     'performance',
     'security',
-    'scalability'
+    'scalability',
   ];
 
-  const trivialKeywords = [
-    'typo',
-    'rename',
-    'small fix',
-    'quick fix',
-    'docs',
-    'readme'
-  ];
+  const trivialKeywords = ['typo', 'rename', 'small fix', 'quick fix', 'docs', 'readme'];
 
   if (teamKeywords.some(keyword => normalized.includes(keyword))) {
     return 'team';
@@ -81,7 +74,7 @@ export class SmartRouter {
     const defaultResult: RouterResult = {
       recommended: 'simple',
       confidence: 0.7,
-      reasoning: 'Default routing - task complexity analysis pending'
+      reasoning: 'Default routing - task complexity analysis pending',
     };
 
     const normalized = description.trim();
@@ -99,7 +92,7 @@ export class SmartRouter {
       return {
         recommended,
         confidence: 0.8,
-        reasoning: 'Detected lightweight task indicators'
+        reasoning: 'Detected lightweight task indicators',
       };
     }
 
@@ -107,14 +100,14 @@ export class SmartRouter {
       return {
         recommended,
         confidence: 0.82,
-        reasoning: 'Detected high-complexity implementation indicators'
+        reasoning: 'Detected high-complexity implementation indicators',
       };
     }
 
     return {
       recommended: 'team',
       confidence: 0.86,
-      reasoning: 'Detected collaboration and coordination indicators'
+      reasoning: 'Detected collaboration and coordination indicators',
     };
   }
 }

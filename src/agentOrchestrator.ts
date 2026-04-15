@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Agent, AgentStatus, Message } from './types';
 import { ConfigManager } from './config';
-import * as child_process from 'child_process';
 
 /**
  * Manages agent lifecycle and orchestration
@@ -18,17 +17,14 @@ export class AgentOrchestrator {
   /**
    * Create a new agent
    */
-  async createAgent(
-    name: string,
-    capabilities: string[] = ['general']
-  ): Promise<Agent> {
+  async createAgent(name: string, capabilities: string[] = ['general']): Promise<Agent> {
     const agent: Agent = {
       id: uuidv4(),
       name,
       status: AgentStatus.IDLE,
       mailbox: [],
       capabilities,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     await this.configManager.saveAgent(agent);
@@ -53,7 +49,7 @@ export class AgentOrchestrator {
 
     const updatedAgent = {
       ...agent,
-      ...updates
+      ...updates,
     };
 
     await this.configManager.saveAgent(updatedAgent);
@@ -78,12 +74,7 @@ export class AgentOrchestrator {
   /**
    * Send message to agent
    */
-  async sendMessage(
-    from: string,
-    toAgentId: string,
-    subject: string,
-    body: string
-  ): Promise<void> {
+  async sendMessage(from: string, toAgentId: string, subject: string, body: string): Promise<void> {
     const agent = await this.getAgent(toAgentId);
     if (!agent) {
       throw new Error(`Agent not found: ${toAgentId}`);
@@ -96,7 +87,7 @@ export class AgentOrchestrator {
       subject,
       body,
       timestamp: new Date(),
-      read: false
+      read: false,
     };
 
     agent.mailbox.push(message);
@@ -142,7 +133,7 @@ export class AgentOrchestrator {
 
     // Sanitize workspace root to prevent command injection
     const sanitizedWorkspace = this.workspaceRoot.replace(/['"\\$`]/g, '\\$&');
-    
+
     // Create a script to install and run OpenCode
     const script = `
       #!/bin/bash
@@ -163,10 +154,10 @@ export class AgentOrchestrator {
 
     // Placeholder PID - use null in production until actual terminal spawning is implemented
     const pid = undefined;
-    
+
     await this.updateAgent(agentId, {
       terminalPid: pid,
-      status: AgentStatus.WORKING
+      status: AgentStatus.WORKING,
     });
 
     return pid || 0;
@@ -184,7 +175,7 @@ export class AgentOrchestrator {
     // Update agent with current task
     await this.updateAgent(agentId, {
       currentTask: taskId,
-      status: AgentStatus.WORKING
+      status: AgentStatus.WORKING,
     });
 
     // Send message with task details
@@ -214,7 +205,7 @@ export class AgentOrchestrator {
     await this.updateAgent(agentId, {
       status: AgentStatus.OFFLINE,
       currentTask: undefined,
-      terminalPid: undefined
+      terminalPid: undefined,
     });
   }
 }

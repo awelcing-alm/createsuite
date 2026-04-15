@@ -1,4 +1,4 @@
-import { Plan, PlanTask } from './types';
+import { Plan } from './types';
 import { ConfigManager } from './config';
 
 /**
@@ -36,7 +36,7 @@ export class PlanManager {
    * @param name - The name of the plan
    * @returns The Plan object or null if not found
    */
-  async getPlan(name: string): Promise<Plan | null> {
+  async getPlan(_name: string): Promise<Plan | null> {
     return null;
   }
 
@@ -56,7 +56,7 @@ export class PlanManager {
    * @param content - The updated plan content
    * @returns The updated Plan object or null if not found
    */
-  async updatePlan(name: string, content: string): Promise<Plan | null> {
+  async updatePlan(_name: string, _content: string): Promise<Plan | null> {
     return null;
   }
 
@@ -66,7 +66,7 @@ export class PlanManager {
    * @param name - The name of the plan
    * @returns True if deleted, false otherwise
    */
-  async deletePlan(name: string): Promise<boolean> {
+  async deletePlan(_name: string): Promise<boolean> {
     return false;
   }
 }

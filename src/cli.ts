@@ -13,8 +13,9 @@ import { ConvoyManager } from './convoyManager';
 import { GitIntegration } from './gitIntegration';
 import { OAuthManager } from './oauthManager';
 import { ProviderManager } from './providerManager';
-import { TaskStatus, TaskPriority, ConvoyStatus, AgentStatus, Task } from './types';
-import { SmartRouter, WorkflowType } from './smartRouter';
+import { TaskStatus, TaskPriority, ConvoyStatus, AgentStatus } from './types';
+import { SmartRouter } from './smartRouter';
+import { isValidTaskId, isValidConvoyId, isValidAgentId } from './sanitization';
 
 const execAsync = promisify(exec);
 
@@ -38,39 +39,43 @@ program
   .option('-r, --repo <url>', 'Git repository URL')
   .option('--git', 'Initialize git repository')
   .option('--skip-providers', 'Skip provider setup')
-  .action(async (options) => {
+  .action(async options => {
     const workspaceRoot = getWorkspaceRoot();
     const name = options.name || path.basename(workspaceRoot);
-    
+
     console.log(chalk.blue('Initializing CreateSuite workspace...'));
-    
+
     const configManager = new ConfigManager(workspaceRoot);
     await configManager.initialize(name, options.repo);
-    
+
     if (options.git) {
       const gitIntegration = new GitIntegration(workspaceRoot);
       await gitIntegration.initialize();
       console.log(chalk.green('✓ Git repository initialized'));
     }
-    
+
     console.log(chalk.green(`✓ Workspace "${name}" initialized at ${workspaceRoot}`));
-    
+
     // Prompt for provider setup
     if (!options.skipProviders) {
-      console.log(chalk.bold.cyan('\n🚀 Let\'s set up your AI model providers!\n'));
-      console.log(chalk.gray('CreateSuite uses OpenCode and oh-my-opencode for advanced agent orchestration.'));
-      console.log(chalk.gray('This will configure connections to Z.ai, Claude, OpenAI, MiniMax, and more.\n'));
-      
+      console.log(chalk.bold.cyan("\n🚀 Let's set up your AI model providers!\n"));
+      console.log(
+        chalk.gray('CreateSuite uses OpenCode and oh-my-opencode for advanced agent orchestration.')
+      );
+      console.log(
+        chalk.gray('This will configure connections to Z.ai, Claude, OpenAI, MiniMax, and more.\n')
+      );
+
       const inquirer = (await import('inquirer')).default;
       const { setupProviders } = await inquirer.prompt([
         {
           type: 'confirm',
           name: 'setupProviders',
           message: 'Would you like to set up your AI providers now?',
-          default: true
-        }
+          default: true,
+        },
       ]);
-      
+
       if (setupProviders) {
         const providerManager = new ProviderManager(workspaceRoot);
         await providerManager.setupProviders();
@@ -79,7 +84,7 @@ program
         console.log(chalk.blue('  cs provider setup\n'));
       }
     }
-    
+
     console.log(chalk.gray('\nNext steps:'));
     console.log(chalk.gray('  cs agent create <name>  - Create an agent'));
     console.log(chalk.gray('  cs task create          - Create a task'));
@@ -97,24 +102,24 @@ taskCmd
   .option('-d, --description <desc>', 'Task description')
   .option('-p, --priority <priority>', 'Priority (low|medium|high|critical)', 'medium')
   .option('--tags <tags>', 'Comma-separated tags')
-  .action(async (options) => {
+  .action(async options => {
     const workspaceRoot = getWorkspaceRoot();
     const taskManager = new TaskManager(workspaceRoot);
     const gitIntegration = new GitIntegration(workspaceRoot);
     const smartRouter = new SmartRouter();
-    
+
     const title = options.title || 'New Task';
     const description = options.description || '';
     const priority = options.priority as TaskPriority;
     const tags = options.tags ? options.tags.split(',') : [];
-    
+
     const fullDescription = `${title} ${description}`.trim();
     const routingResult = smartRouter.route(fullDescription);
-    
+
     const task = await taskManager.createTask(title, description, priority, tags);
-    
+
     await gitIntegration.commitTaskChanges(`Created task: ${task.id} - ${task.title}`);
-    
+
     console.log(chalk.green(`✓ Task created: ${task.id}`));
     console.log(chalk.gray(`  Title: ${task.title}`));
     console.log(chalk.gray(`  Priority: ${task.priority}`));
@@ -123,7 +128,7 @@ taskCmd
     console.log(chalk.gray(`  Recommended: ${routingResult.recommended.toUpperCase()}`));
     console.log(chalk.gray(`  Confidence: ${Math.round(routingResult.confidence * 100)}%`));
     console.log(chalk.gray(`  Reasoning: ${routingResult.reasoning}`));
-    
+
     if (routingResult.recommended === 'complex' || routingResult.recommended === 'team') {
       console.log();
       console.log(chalk.yellow('💡 This task may require planning. Consider:'));
@@ -137,10 +142,10 @@ taskCmd
   .description('List all tasks')
   .option('-s, --status <status>', 'Filter by status')
   .option('-a, --agent <agentId>', 'Filter by assigned agent')
-  .action(async (options) => {
+  .action(async options => {
     const workspaceRoot = getWorkspaceRoot();
     const taskManager = new TaskManager(workspaceRoot);
-    
+
     const filters: {
       status?: TaskStatus;
       assignedAgent?: string;
@@ -148,22 +153,25 @@ taskCmd
     } = {};
     if (options.status) filters.status = options.status;
     if (options.agent) filters.assignedAgent = options.agent;
-    
+
     const tasks = await taskManager.listTasks(filters);
-    
+
     if (tasks.length === 0) {
       console.log(chalk.yellow('No tasks found'));
       return;
     }
-    
+
     console.log(chalk.blue(`\nFound ${tasks.length} task(s):\n`));
     for (const task of tasks) {
-      const statusColor = 
-        task.status === TaskStatus.COMPLETED ? chalk.green :
-        task.status === TaskStatus.IN_PROGRESS ? chalk.yellow :
-        task.status === TaskStatus.BLOCKED ? chalk.red :
-        chalk.gray;
-      
+      const statusColor =
+        task.status === TaskStatus.COMPLETED
+          ? chalk.green
+          : task.status === TaskStatus.IN_PROGRESS
+            ? chalk.yellow
+            : task.status === TaskStatus.BLOCKED
+              ? chalk.red
+              : chalk.gray;
+
       console.log(`${chalk.bold(task.id)} - ${task.title}`);
       console.log(`  Status: ${statusColor(task.status)}`);
       console.log(`  Priority: ${task.priority}`);
@@ -177,16 +185,21 @@ taskCmd
 taskCmd
   .command('show <taskId>')
   .description('Show task details')
-  .action(async (taskId) => {
+  .action(async taskId => {
+    if (!isValidTaskId(taskId)) {
+      console.log(chalk.red(`Invalid task ID format: ${taskId}`));
+      return;
+    }
+
     const workspaceRoot = getWorkspaceRoot();
     const taskManager = new TaskManager(workspaceRoot);
-    
+
     const task = await taskManager.getTask(taskId);
     if (!task) {
       console.log(chalk.red(`Task not found: ${taskId}`));
       return;
     }
-    
+
     console.log(chalk.blue(`\nTask: ${task.id}\n`));
     console.log(`Title: ${task.title}`);
     console.log(`Description: ${task.description}`);
@@ -214,12 +227,12 @@ agentCmd
     const workspaceRoot = getWorkspaceRoot();
     const orchestrator = new AgentOrchestrator(workspaceRoot);
     const gitIntegration = new GitIntegration(workspaceRoot);
-    
+
     const capabilities = options.capabilities ? options.capabilities.split(',') : ['general'];
-    
+
     const agent = await orchestrator.createAgent(name, capabilities);
     await gitIntegration.commitTaskChanges(`Created agent: ${agent.name} (${agent.id})`);
-    
+
     console.log(chalk.green(`✓ Agent created: ${agent.name}`));
     console.log(chalk.gray(`  ID: ${agent.id}`));
     console.log(chalk.gray(`  Capabilities: ${agent.capabilities.join(', ')}`));
@@ -231,22 +244,25 @@ agentCmd
   .action(async () => {
     const workspaceRoot = getWorkspaceRoot();
     const orchestrator = new AgentOrchestrator(workspaceRoot);
-    
+
     const agents = await orchestrator.listAgents();
-    
+
     if (agents.length === 0) {
       console.log(chalk.yellow('No agents found'));
       return;
     }
-    
+
     console.log(chalk.blue(`\nFound ${agents.length} agent(s):\n`));
     for (const agent of agents) {
-      const statusColor = 
-        agent.status === AgentStatus.WORKING ? chalk.green :
-        agent.status === AgentStatus.IDLE ? chalk.yellow :
-        agent.status === AgentStatus.ERROR ? chalk.red :
-        chalk.gray;
-      
+      const statusColor =
+        agent.status === AgentStatus.WORKING
+          ? chalk.green
+          : agent.status === AgentStatus.IDLE
+            ? chalk.yellow
+            : agent.status === AgentStatus.ERROR
+              ? chalk.red
+              : chalk.gray;
+
       console.log(`${chalk.bold(agent.name)} (${agent.id})`);
       console.log(`  Status: ${statusColor(agent.status)}`);
       if (agent.currentTask) {
@@ -261,15 +277,24 @@ agentCmd
   .command('assign <taskId> <agentId>')
   .description('Assign a task to an agent')
   .action(async (taskId, agentId) => {
+    if (!isValidTaskId(taskId)) {
+      console.log(chalk.red(`Invalid task ID format: ${taskId}`));
+      return;
+    }
+    if (!isValidAgentId(agentId)) {
+      console.log(chalk.red(`Invalid agent ID format: ${agentId}`));
+      return;
+    }
+
     const workspaceRoot = getWorkspaceRoot();
     const orchestrator = new AgentOrchestrator(workspaceRoot);
     const taskManager = new TaskManager(workspaceRoot);
     const gitIntegration = new GitIntegration(workspaceRoot);
-    
+
     await orchestrator.assignTaskToAgent(agentId, taskId);
     await taskManager.assignTask(taskId, agentId);
     await gitIntegration.commitTaskChanges(`Assigned task ${taskId} to agent ${agentId}`);
-    
+
     console.log(chalk.green(`✓ Task ${taskId} assigned to agent ${agentId}`));
   });
 
@@ -286,13 +311,13 @@ convoyCmd
     const workspaceRoot = getWorkspaceRoot();
     const convoyManager = new ConvoyManager(workspaceRoot);
     const gitIntegration = new GitIntegration(workspaceRoot);
-    
+
     const description = options.description || '';
     const taskIds = options.tasks ? options.tasks.split(',') : [];
-    
+
     const convoy = await convoyManager.createConvoy(name, description, taskIds);
     await gitIntegration.commitTaskChanges(`Created convoy: ${convoy.id} - ${convoy.name}`);
-    
+
     console.log(chalk.green(`✓ Convoy created: ${convoy.id}`));
     console.log(chalk.gray(`  Name: ${convoy.name}`));
     console.log(chalk.gray(`  Tasks: ${convoy.tasks.length}`));
@@ -302,22 +327,22 @@ convoyCmd
   .command('list')
   .description('List all convoys')
   .option('-s, --status <status>', 'Filter by status')
-  .action(async (options) => {
+  .action(async options => {
     const workspaceRoot = getWorkspaceRoot();
     const convoyManager = new ConvoyManager(workspaceRoot);
-    
+
     const status = options.status as ConvoyStatus | undefined;
     const convoys = await convoyManager.listConvoys(status);
-    
+
     if (convoys.length === 0) {
       console.log(chalk.yellow('No convoys found'));
       return;
     }
-    
+
     console.log(chalk.blue(`\nFound ${convoys.length} convoy(s):\n`));
     for (const convoy of convoys) {
       const progress = await convoyManager.getConvoyProgress(convoy.id);
-      
+
       console.log(`${chalk.bold(convoy.id)} - ${convoy.name}`);
       console.log(`  Status: ${convoy.status}`);
       console.log(`  Tasks: ${convoy.tasks.length}`);
@@ -329,24 +354,31 @@ convoyCmd
 convoyCmd
   .command('show <convoyId>')
   .description('Show convoy details')
-  .action(async (convoyId) => {
+  .action(async convoyId => {
+    if (!isValidConvoyId(convoyId)) {
+      console.log(chalk.red(`Invalid convoy ID format: ${convoyId}`));
+      return;
+    }
+
     const workspaceRoot = getWorkspaceRoot();
     const convoyManager = new ConvoyManager(workspaceRoot);
-    
+
     const convoy = await convoyManager.getConvoy(convoyId);
     if (!convoy) {
       console.log(chalk.red(`Convoy not found: ${convoyId}`));
       return;
     }
-    
+
     const progress = await convoyManager.getConvoyProgress(convoy.id);
-    
+
     console.log(chalk.blue(`\nConvoy: ${convoy.id}\n`));
     console.log(`Name: ${convoy.name}`);
     console.log(`Description: ${convoy.description}`);
     console.log(`Status: ${convoy.status}`);
     console.log(`Created: ${convoy.createdAt.toISOString()}`);
-    console.log(`\nProgress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%)`);
+    console.log(
+      `\nProgress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%)`
+    );
     console.log(`  Open: ${progress.open}`);
     console.log(`  In Progress: ${progress.inProgress}`);
     console.log(`  Completed: ${progress.completed}`);
@@ -360,16 +392,16 @@ program
   .option('--init', 'Initialize OAuth flow')
   .option('--status', 'Check OAuth status')
   .option('--clear', 'Clear stored token')
-  .action(async (options) => {
+  .action(async options => {
     const workspaceRoot = getWorkspaceRoot();
     const oauthManager = new OAuthManager(workspaceRoot);
-    
+
     if (options.clear) {
       await oauthManager.clearToken();
       console.log(chalk.green('✓ OAuth token cleared'));
       return;
     }
-    
+
     if (options.status) {
       const hasToken = await oauthManager.hasValidToken();
       if (hasToken) {
@@ -380,14 +412,14 @@ program
       }
       return;
     }
-    
+
     if (options.init) {
       const config = oauthManager.getOAuthConfig();
       await oauthManager.initializeOAuth(config);
       console.log(chalk.green('✓ OAuth initialized'));
       return;
     }
-    
+
     // Default: show status
     const hasToken = await oauthManager.hasValidToken();
     if (hasToken) {
@@ -407,7 +439,7 @@ providerCmd
   .action(async () => {
     const workspaceRoot = getWorkspaceRoot();
     const providerManager = new ProviderManager(workspaceRoot);
-    
+
     try {
       await providerManager.setupProviders();
     } catch (error) {
@@ -422,7 +454,7 @@ providerCmd
   .action(async () => {
     const workspaceRoot = getWorkspaceRoot();
     const providerManager = new ProviderManager(workspaceRoot);
-    
+
     try {
       await providerManager.listProviders();
     } catch (error) {
@@ -437,7 +469,7 @@ providerCmd
   .action(async () => {
     const workspaceRoot = getWorkspaceRoot();
     const providerManager = new ProviderManager(workspaceRoot);
-    
+
     try {
       const providers = await providerManager.loadProviders();
       if (providers.length === 0) {
@@ -445,13 +477,85 @@ providerCmd
         console.log(chalk.gray('Run: cs provider setup'));
         return;
       }
-      
+
       await providerManager.authenticateProviders(providers);
     } catch (error) {
       console.error(chalk.red('Error authenticating providers:'), error);
       process.exit(1);
     }
   });
+
+providerCmd
+  .command('status')
+  .description('Show detailed provider status with health checks')
+  .action(async () => {
+    const workspaceRoot = getWorkspaceRoot();
+    const providerManager = new ProviderManager(workspaceRoot);
+
+    try {
+      const statuses = await providerManager.getProviderStatus();
+
+      if (statuses.length === 0) {
+        console.log(chalk.yellow('No providers configured.'));
+        console.log(chalk.gray('Run: cs provider setup'));
+        return;
+      }
+
+      console.log(chalk.bold.blue('\n🔍 Provider Status\n'));
+
+      for (const status of statuses) {
+        const authStatus = status.authenticated
+          ? chalk.green('✓ Authenticated')
+          : chalk.red('✗ Not authenticated');
+
+        console.log(chalk.bold(`${status.name}`));
+        console.log(chalk.gray(`  Model: ${status.model || 'N/A'}`));
+        console.log(`  Status: ${authStatus}`);
+
+        if (status.lastValidated) {
+          const timeAgo = getTimeAgo(status.lastValidated);
+          console.log(chalk.gray(`  Last validated: ${timeAgo}`));
+        }
+
+        if (status.responseTime !== null) {
+          const rtColor = status.responseTime < 1000 ? chalk.green : chalk.yellow;
+          console.log(rtColor(`  Response time: ${status.responseTime}ms`));
+        }
+
+        if (status.rateLimitRemaining !== null) {
+          console.log(chalk.gray(`  Rate limit remaining: ${status.rateLimitRemaining}`));
+        }
+
+        if (status.issues.length > 0) {
+          console.log(chalk.yellow('  Issues:'));
+          for (const issue of status.issues) {
+            console.log(chalk.yellow(`    • ${issue}`));
+          }
+        }
+
+        if (status.suggestions.length > 0) {
+          console.log(chalk.cyan('  Suggestions:'));
+          for (const suggestion of status.suggestions) {
+            console.log(chalk.cyan(`    → ${suggestion}`));
+          }
+        }
+
+        console.log('');
+      }
+    } catch (error) {
+      console.error(chalk.red('Error getting provider status:'), error);
+      process.exit(1);
+    }
+  });
+
+function getTimeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+  return `${Math.floor(seconds / 86400)} days ago`;
+}
 
 // Status command
 program
@@ -464,35 +568,38 @@ program
     const orchestrator = new AgentOrchestrator(workspaceRoot);
     const convoyManager = new ConvoyManager(workspaceRoot);
     const gitIntegration = new GitIntegration(workspaceRoot);
-    
+
     try {
       const config = await configManager.loadConfig();
       const tasks = await taskManager.listTasks();
       const agents = await orchestrator.listAgents();
       const convoys = await convoyManager.listConvoys();
-      
+
       console.log(chalk.blue(`\nWorkspace: ${config.name}\n`));
       console.log(`Path: ${config.path}`);
       if (config.repository) {
         console.log(`Repository: ${config.repository}`);
       }
-      
+
       console.log(chalk.blue('\nStatistics:'));
       console.log(`  Tasks: ${tasks.length}`);
       console.log(`    Open: ${tasks.filter(t => t.status === TaskStatus.OPEN).length}`);
-      console.log(`    In Progress: ${tasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length}`);
+      console.log(
+        `    In Progress: ${tasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length}`
+      );
       console.log(`    Completed: ${tasks.filter(t => t.status === TaskStatus.COMPLETED).length}`);
       console.log(`  Agents: ${agents.length}`);
       console.log(`    Idle: ${agents.filter(a => a.status === AgentStatus.IDLE).length}`);
       console.log(`    Working: ${agents.filter(a => a.status === AgentStatus.WORKING).length}`);
       console.log(`  Convoys: ${convoys.length}`);
-      
+
       // Git status
       const isClean = await gitIntegration.isClean();
       console.log(chalk.blue('\nGit Status:'));
-      console.log(`  Working directory: ${isClean ? chalk.green('clean') : chalk.yellow('has changes')}`);
-      
-    } catch (error) {
+      console.log(
+        `  Working directory: ${isClean ? chalk.green('clean') : chalk.yellow('has changes')}`
+      );
+    } catch {
       console.log(chalk.red('Error: Workspace not initialized'));
       console.log(chalk.gray('Run: cs init'));
     }
@@ -504,21 +611,21 @@ program
   .description('Open the CreateSuite tour and landing page')
   .action(async () => {
     const landingPagePath = path.join(__dirname, '..', 'public', 'index.html');
-    
+
     if (!fs.existsSync(landingPagePath)) {
       console.log(chalk.red('Landing page not found.'));
       console.log(chalk.yellow('Please run: npm run video:build'));
       return;
     }
-    
+
     console.log(chalk.blue('Opening CreateSuite tour...'));
     console.log(chalk.gray(`Location: ${landingPagePath}`));
-    
+
     // Open the landing page in the default browser using spawn for safety
     const open = async (filePath: string) => {
       let command: string;
       let args: string[];
-      
+
       if (process.platform === 'darwin') {
         command = 'open';
         args = [filePath];
@@ -529,22 +636,22 @@ program
         command = 'xdg-open';
         args = [filePath];
       }
-      
+
       return new Promise<void>((resolve, reject) => {
         const child = spawn(command, args, {
           detached: true,
-          stdio: 'ignore'
+          stdio: 'ignore',
         });
-        
-        child.on('error', (error) => {
+
+        child.on('error', error => {
           reject(error);
         });
-        
+
         child.unref();
         resolve();
       });
     };
-    
+
     try {
       await open(landingPagePath);
       console.log(chalk.green('✓ Landing page opened in browser'));
@@ -558,11 +665,11 @@ program
   .command('video')
   .description('Build the CreateSuite tour video')
   .option('--preview', 'Preview the video in Remotion studio')
-  .action(async (options) => {
+  .action(async options => {
     if (options.preview) {
       console.log(chalk.blue('Opening Remotion preview...'));
       console.log(chalk.gray('This will open the Remotion studio in your browser.'));
-      
+
       exec('npm run remotion:preview', (error: Error | null, stdout: string, stderr: string) => {
         if (error) {
           console.log(chalk.red(`Error: ${error.message}`));
@@ -576,7 +683,7 @@ program
     } else {
       console.log(chalk.blue('Building CreateSuite tour video...'));
       console.log(chalk.gray('This may take a few minutes...'));
-      
+
       try {
         const { stdout, stderr } = await execAsync('npm run video:build');
         if (stderr) {
@@ -600,46 +707,44 @@ program
   .command('ui')
   .description('Start the CreateSuite Agent UI')
   .option('--demo', 'Launch in demo mode with pre-configured agents')
-  .action(async (options) => {
+  .action(async options => {
     const uiPath = path.join(__dirname, '..', 'agent-ui');
     const serverPath = path.join(uiPath, 'server', 'index.js');
-    
+
     if (!fs.existsSync(serverPath)) {
       console.log(chalk.red('Agent UI server not found.'));
       return;
     }
-    
+
     console.log(chalk.blue('Starting CreateSuite Agent UI...'));
     console.log(chalk.gray(`Server: ${serverPath}`));
     if (options.demo) {
       console.log(chalk.cyan('Demo mode: enabled'));
     }
     console.log(chalk.gray('Building UI...'));
-    
+
     try {
       // Build UI first
       await execAsync('cd agent-ui && npm install && npm run build');
-      
+
       console.log(chalk.green('✓ UI built successfully'));
       console.log(chalk.blue('\n🚀 Server starting on http://localhost:3001'));
       console.log(chalk.gray('Press Ctrl+C to stop'));
-      
+
       // Start server with demo mode environment variable
-      const { spawn } = require('child_process');
       const env = {
         ...process.env,
-        DEMO_MODE: options.demo ? 'true' : ''
+        DEMO_MODE: options.demo ? 'true' : '',
       };
-      
+
       const server = spawn('node', [serverPath], {
         stdio: 'inherit',
-        env
+        env,
       });
-      
+
       server.on('error', (err: Error) => {
         console.error(chalk.red('Failed to start server:'), err);
       });
-      
     } catch (error) {
       console.error(chalk.red('Error starting UI:'), (error as Error).message);
     }

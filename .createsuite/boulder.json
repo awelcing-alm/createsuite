@@ -1,6 +1,7 @@
 {
-  "active_plan": "/workspaces/createsuite/.sisyphus/plans/runtime-stabilization.md",
-  "started_at": "2026-03-19T15:34:25.943Z",
-  "session_ids": ["ses_2f97fdcb0ffe1Cq8x23SMZbSN7"],
-  "plan_name": "runtime-stabilization"
+  "active_plan": "/workspaces/createsuite/.sisyphus/plans/dev-workflow-fix.md",
+  "started_at": "2026-04-11T00:40:00Z",
+  "session_ids": [],
+  "plan_name": "dev-workflow-fix",
+  "worktree_path": null
 }

@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { Task, TaskStatus, TaskPriority } from './types';
 import { ConfigManager } from './config';
 
@@ -47,7 +46,7 @@ export class TaskManager {
       createdAt: new Date(),
       updatedAt: new Date(),
       priority,
-      tags
+      tags,
     };
 
     await this.configManager.saveTask(task);
@@ -73,7 +72,7 @@ export class TaskManager {
     const updatedTask = {
       ...task,
       ...updates,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     await this.configManager.saveTask(updatedTask);
@@ -86,7 +85,7 @@ export class TaskManager {
   async assignTask(taskId: string, agentId: string): Promise<Task> {
     return await this.updateTask(taskId, {
       assignedAgent: agentId,
-      status: TaskStatus.IN_PROGRESS
+      status: TaskStatus.IN_PROGRESS,
     });
   }
 
@@ -95,7 +94,7 @@ export class TaskManager {
    */
   async completeTask(taskId: string): Promise<Task> {
     return await this.updateTask(taskId, {
-      status: TaskStatus.COMPLETED
+      status: TaskStatus.COMPLETED,
     });
   }
 

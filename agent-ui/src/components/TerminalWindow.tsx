@@ -6,7 +6,8 @@ import { io, Socket } from 'socket.io-client';
 import styled, { keyframes } from 'styled-components';
 import Draggable from 'react-draggable';
 import { macosTheme } from '../theme/macos';
-import { X, Minus, Maximize2 } from 'lucide-react';
+import { XIcon, MinusIcon, Maximize2Icon } from './ui/InlineIcon';
+import { TerminalChannel } from '../utils/terminalChannel';
 import type { UiCommandPayload } from '../App';
 
 // Animations
@@ -28,29 +29,34 @@ const minimizeOut = keyframes`
 const WindowWrapper = styled.div<{ $minimized?: boolean }>`
   position: absolute;
   animation: ${fadeIn} 0.2s ease-out;
-  
-  ${props => props.$minimized && `
+
+  ${props =>
+    props.$minimized &&
+    `
     animation: ${minimizeOut} 0.3s ease-out forwards;
     pointer-events: none;
   `}
 `;
 
 const Window = styled.div<{ $active?: boolean; $maximized?: boolean }>`
-  width: ${props => props.$maximized ? '100vw' : '600px'};
-  height: ${props => props.$maximized ? 'calc(100vh - 108px)' : '400px'};
-  min-width: ${props => props.$maximized ? 'unset' : '400px'};
-  min-height: ${props => props.$maximized ? 'unset' : '250px'};
+  width: ${props => (props.$maximized ? '100vw' : '600px')};
+  height: ${props => (props.$maximized ? 'calc(100vh - 108px)' : '400px')};
+  min-width: ${props => (props.$maximized ? 'unset' : '400px')};
+  min-height: ${props => (props.$maximized ? 'unset' : '250px')};
   background: #1e1e1e;
-  border-radius: ${props => props.$maximized ? '0' : '10px'};
+  border-radius: ${props => (props.$maximized ? '0' : '10px')};
   overflow: hidden;
-  box-shadow: ${props => props.$active 
-    ? '0 22px 70px 4px rgba(0, 0, 0, 0.56), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset'
-    : '0 10px 30px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset'};
+  box-shadow: ${props =>
+    props.$active
+      ? '0 22px 70px 4px rgba(0, 0, 0, 0.56), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset'
+      : '0 10px 30px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset'};
   display: flex;
   flex-direction: column;
   transition: all 0.25s ease;
-  
-  ${props => props.$maximized && `
+
+  ${props =>
+    props.$maximized &&
+    `
     position: fixed;
     top: 28px;
     left: 0;
@@ -59,9 +65,10 @@ const Window = styled.div<{ $active?: boolean; $maximized?: boolean }>`
 
 const TitleBar = styled.div<{ $active?: boolean }>`
   height: 38px;
-  background: ${props => props.$active 
-    ? 'linear-gradient(180deg, #3a3a3c 0%, #2c2c2e 100%)'
-    : 'linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%)'};
+  background: ${props =>
+    props.$active
+      ? 'linear-gradient(180deg, #3a3a3c 0%, #2c2c2e 100%)'
+      : 'linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%)'};
   display: flex;
   align-items: center;
   padding: 0 12px;
@@ -77,7 +84,10 @@ const TrafficLights = styled.div`
   align-items: center;
 `;
 
-const TrafficLight = styled.button<{ $color: 'close' | 'minimize' | 'maximize'; $active?: boolean }>`
+const TrafficLight = styled.button<{
+  $color: 'close' | 'minimize' | 'maximize';
+  $active?: boolean;
+}>`
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -88,26 +98,32 @@ const TrafficLight = styled.button<{ $color: 'close' | 'minimize' | 'maximize'; 
   align-items: center;
   justify-content: center;
   transition: all 0.15s ease;
-  
+
   background: ${props => {
     if (!props.$active) return '#4a4a4c';
     switch (props.$color) {
-      case 'close': return '#ff5f57';
-      case 'minimize': return '#febc2e';
-      case 'maximize': return '#28c840';
+      case 'close':
+        return '#ff5f57';
+      case 'minimize':
+        return '#febc2e';
+      case 'maximize':
+        return '#28c840';
     }
   }};
-  
+
   &:hover {
     background: ${props => {
       switch (props.$color) {
-        case 'close': return '#ff3b30';
-        case 'minimize': return '#ff9500';
-        case 'maximize': return '#34c759';
+        case 'close':
+          return '#ff3b30';
+        case 'minimize':
+          return '#ff9500';
+        case 'maximize':
+          return '#34c759';
       }
     }};
   }
-  
+
   svg {
     width: 8px;
     height: 8px;
@@ -115,7 +131,7 @@ const TrafficLight = styled.button<{ $color: 'close' | 'minimize' | 'maximize'; 
     color: rgba(0, 0, 0, 0.6);
     transition: opacity 0.1s;
   }
-  
+
   ${TrafficLights}:hover & svg {
     opacity: 1;
   }
@@ -136,27 +152,27 @@ const TerminalContainer = styled.div`
   padding: 8px;
   overflow: hidden;
   position: relative;
-  
+
   .xterm {
     height: 100%;
   }
-  
+
   .xterm-viewport {
     overflow-y: auto;
-    
+
     &::-webkit-scrollbar {
       width: 8px;
     }
-    
+
     &::-webkit-scrollbar-track {
       background: transparent;
     }
-    
+
     &::-webkit-scrollbar-thumb {
       background: rgba(255, 255, 255, 0.2);
       border-radius: 4px;
     }
-    
+
     &::-webkit-scrollbar-thumb:hover {
       background: rgba(255, 255, 255, 0.3);
     }
@@ -205,11 +221,11 @@ interface TerminalWindowProps {
   onUiCommand?: (command: UiCommandPayload) => void;
 }
 
-const TerminalWindow: React.FC<TerminalWindowProps> = ({ 
-  id, 
-  title, 
-  onClose, 
-  zIndex, 
+const TerminalWindow: React.FC<TerminalWindowProps> = ({
+  id,
+  title,
+  onClose,
+  zIndex,
   onFocus,
   initialPosition = { x: 50, y: 50 },
   minimized = false,
@@ -217,25 +233,28 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
   onMinimize,
   onMaximize,
   initialCommand,
-  onUiCommand
+  onUiCommand,
 }) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
+  const channelRef = useRef<TerminalChannel | null>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>(
+    'connecting'
+  );
   const [isActive, setIsActive] = useState(true);
 
   const onUiCommandRef = useRef(onUiCommand);
-  
+
   useEffect(() => {
     onUiCommandRef.current = onUiCommand;
   }, [onUiCommand]);
 
   useEffect(() => {
-    socketRef.current = io();
+    const usePhoenix = import.meta.env.VITE_PHOENIX_TERMINAL === 'true';
 
     const term = new Terminal({
       cursorBlink: true,
@@ -264,12 +283,12 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
         brightMagenta: '#ff6ff2',
         brightCyan: '#70d7ff',
         brightWhite: '#ffffff',
-      }
+      },
     });
-    
+
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
-    
+
     if (terminalRef.current) {
       term.open(terminalRef.current);
       setTimeout(() => fitAddon.fit(), 0);
@@ -280,54 +299,101 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
 
     const handleResize = () => {
       fitAddon.fit();
-      if (socketRef.current) {
+      if (usePhoenix && channelRef.current) {
+        channelRef.current.resize(term.cols, term.rows);
+      } else if (socketRef.current) {
         socketRef.current.emit('resize', { cols: term.cols, rows: term.rows });
       }
     };
-    
+
     window.addEventListener('resize', handleResize);
 
-    socketRef.current.on('connect', () => {
-      setConnectionStatus('connected');
-      term.writeln('\x1b[38;2;0;122;255mConnected to Agent Backend\x1b[0m');
-      term.writeln('');
-      socketRef.current?.emit('spawn', { cols: term.cols, rows: term.rows });
-      setIsLoading(false);
-      
-      if (initialCommand) {
-        setTimeout(() => {
-          socketRef.current?.emit('input', initialCommand + '\r');
-        }, 500);
-      }
-    });
+    if (usePhoenix) {
+      const channel = new TerminalChannel(id);
+      channelRef.current = channel;
 
-    socketRef.current.on('connect_error', () => {
-      setConnectionStatus('error');
-      setIsLoading(false);
-      term.writeln('\x1b[38;2;255;95;87mConnection failed\x1b[0m');
-      term.writeln('The agent backend is not available.');
-    });
+      channel.onConnect = () => {
+        setConnectionStatus('connected');
+        term.writeln('\\x1b[38;2;0;122;255mConnected to Agent Backend via Phoenix\\x1b[0m');
+        term.writeln('');
+        setIsLoading(false);
 
-    socketRef.current.on('output', (data: string) => {
-      term.write(data);
-    });
+        if (initialCommand) {
+          setTimeout(() => {
+            channel.sendInput(initialCommand + '\\r');
+          }, 500);
+        }
+      };
 
-    socketRef.current.on('ui-command', (payload: UiCommandPayload) => {
-      if (onUiCommandRef.current) {
-        onUiCommandRef.current(payload);
-      }
-    });
+      channel.onError = () => {
+        setConnectionStatus('error');
+        setIsLoading(false);
+        term.writeln('\\x1b[38;2;255;95;87mConnection failed\\x1b[0m');
+        term.writeln('The agent backend is not available.');
+      };
 
-    term.onData((data) => {
-      socketRef.current?.emit('input', data);
-    });
+      channel.onOutput = (data: string) => {
+        term.write(data);
+      };
+
+      channel.onExit = () => {
+        term.writeln('\\r\\n\\x1b[38;2;255;95;87mSession ended.\\x1b[0m');
+      };
+
+      channel.join(term.cols, term.rows);
+
+      term.onData(data => {
+        channel.sendInput(data);
+      });
+    } else {
+      socketRef.current = io();
+
+      socketRef.current.on('connect', () => {
+        setConnectionStatus('connected');
+        term.writeln('\\x1b[38;2;0;122;255mConnected to Agent Backend\\x1b[0m');
+        term.writeln('');
+        socketRef.current?.emit('spawn', { cols: term.cols, rows: term.rows });
+        setIsLoading(false);
+
+        if (initialCommand) {
+          setTimeout(() => {
+            socketRef.current?.emit('input', initialCommand + '\\r');
+          }, 500);
+        }
+      });
+
+      socketRef.current.on('connect_error', () => {
+        setConnectionStatus('error');
+        setIsLoading(false);
+        term.writeln('\\x1b[38;2;255;95;87mConnection failed\\x1b[0m');
+        term.writeln('The agent backend is not available.');
+      });
+
+      socketRef.current.on('output', (data: string) => {
+        term.write(data);
+      });
+
+      socketRef.current.on('ui-command', (payload: UiCommandPayload) => {
+        if (onUiCommandRef.current) {
+          onUiCommandRef.current(payload);
+        }
+      });
+
+      term.onData(data => {
+        socketRef.current?.emit('input', data);
+      });
+    }
 
     return () => {
       window.removeEventListener('resize', handleResize);
       term.dispose();
-      socketRef.current?.disconnect();
+      if (usePhoenix && channelRef.current) {
+        channelRef.current.leave();
+      } else if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
     };
-  }, [initialCommand]);
+  }, [id, initialCommand]);
 
   const handleFocus = () => {
     setIsActive(true);
@@ -351,41 +417,52 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
         <Window $active={isActive} $maximized={maximized} onMouseDown={handleFocus}>
           <TitleBar className="title-bar" $active={isActive}>
             <TrafficLights>
-              <TrafficLight 
-                $color="close" 
+              <TrafficLight
+                $color="close"
                 $active={isActive}
-                onClick={(e) => { e.stopPropagation(); onClose(id); }}
+                onClick={e => {
+                  e.stopPropagation();
+                  onClose(id);
+                }}
               >
-                <X size={8} strokeWidth={2.5} />
+                <XIcon size={8} strokeWidth={2.5} />
               </TrafficLight>
-              <TrafficLight 
-                $color="minimize" 
+              <TrafficLight
+                $color="minimize"
                 $active={isActive}
-                onClick={(e) => { e.stopPropagation(); onMinimize?.(); }}
+                onClick={e => {
+                  e.stopPropagation();
+                  onMinimize?.();
+                }}
               >
-                <Minus size={8} strokeWidth={2.5} />
+                <MinusIcon size={8} strokeWidth={2.5} />
               </TrafficLight>
-              <TrafficLight 
-                $color="maximize" 
+              <TrafficLight
+                $color="maximize"
                 $active={isActive}
-                onClick={(e) => { e.stopPropagation(); onMaximize?.(); }}
+                onClick={e => {
+                  e.stopPropagation();
+                  onMaximize?.();
+                }}
               >
-                <Maximize2 size={6} strokeWidth={2.5} />
+                <Maximize2Icon size={6} strokeWidth={2.5} />
               </TrafficLight>
             </TrafficLights>
             <Title>{title}</Title>
             <div style={{ width: 52 }} /> {/* Spacer for centering */}
           </TitleBar>
-          
+
           <TerminalContainer>
-            <div ref={terminalRef} style={{ height: '100%' }} onMouseDown={(e) => e.stopPropagation()} />
+            <div
+              ref={terminalRef}
+              style={{ height: '100%' }}
+              onMouseDown={e => e.stopPropagation()}
+            />
             {isLoading && (
               <LoadingOverlay>
                 <Spinner />
                 <LoadingText>
-                  {connectionStatus === 'error' 
-                    ? 'Connection failed' 
-                    : 'Connecting to agent...'}
+                  {connectionStatus === 'error' ? 'Connection failed' : 'Connecting to agent...'}
                 </LoadingText>
               </LoadingOverlay>
             )}

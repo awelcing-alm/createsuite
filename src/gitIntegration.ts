@@ -1,6 +1,7 @@
 import simpleGit, { SimpleGit } from 'simple-git';
 import * as path from 'path';
 import * as fs from 'fs';
+import { sanitizeForGitCommit } from './sanitization';
 
 /**
  * Git integration for task tracking and persistence
@@ -20,10 +21,10 @@ export class GitIntegration {
    */
   async initialize(): Promise<void> {
     const isRepo = await this.git.checkIsRepo();
-    
+
     if (!isRepo) {
       await this.git.init();
-      
+
       // Create initial .gitignore if it doesn't exist
       const gitignorePath = path.join(this.workspaceRoot, '.gitignore');
       if (!fs.existsSync(gitignorePath)) {
@@ -63,13 +64,13 @@ Thumbs.db
    * Commit changes to task tracking data
    */
   async commitTaskChanges(message: string): Promise<void> {
-    // Add all changes in .createsuite directory
+    const sanitizedMessage = sanitizeForGitCommit(message);
+
     await this.git.add('.createsuite/.');
-    
-    // Check if there are changes to commit
+
     const status = await this.git.status();
     if (status.files.length > 0) {
-      await this.git.commit(message);
+      await this.git.commit(sanitizedMessage);
     }
   }
 
@@ -78,14 +79,14 @@ Thumbs.db
    */
   async createAgentBranch(agentId: string, taskId: string): Promise<string> {
     const branchName = `agent/${agentId}/${taskId}`;
-    
+
     try {
       await this.git.checkoutLocalBranch(branchName);
-    } catch (error) {
+    } catch {
       // Branch might already exist
       await this.git.checkout(branchName);
     }
-    
+
     return branchName;
   }
 

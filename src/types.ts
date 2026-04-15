@@ -18,14 +18,14 @@ export enum TaskStatus {
   OPEN = 'open',
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
-  BLOCKED = 'blocked'
+  BLOCKED = 'blocked',
 }
 
 export enum TaskPriority {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 /**
@@ -46,7 +46,7 @@ export enum AgentStatus {
   IDLE = 'idle',
   WORKING = 'working',
   OFFLINE = 'offline',
-  ERROR = 'error'
+  ERROR = 'error',
 }
 
 /**
@@ -77,7 +77,7 @@ export interface Convoy {
 export enum ConvoyStatus {
   ACTIVE = 'active',
   COMPLETED = 'completed',
-  PAUSED = 'paused'
+  PAUSED = 'paused',
 }
 
 /**

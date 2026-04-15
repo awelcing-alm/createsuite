@@ -19,6 +19,8 @@ Documentation for users getting started with CreateSuite.
 
 - **[Getting Started Guide](guides/GETTING_STARTED.md)** - Complete tutorial for new users
 - **[Examples](guides/EXAMPLES.md)** - Common workflows and usage patterns
+- **[GLSL Hill-Climb Playbook](guides/GLSL_HILL_CLIMB_PLAYBOOK.md)** - Shader quality/performance workflow for the background
+- **[Background Evaluation Harness](guides/BACKGROUND_EVALUATION.md)** - Canonical screenshots and frame-pacing review for the shader
 
 ### Architecture (`architecture/`)
 
@@ -118,6 +120,8 @@ See [Provider Setup Guide](providers/PROVIDER_SETUP.md) for detailed instruction
 - **[Getting Started](guides/GETTING_STARTED.md)** - Start here if you're new
 - **[Provider Setup](providers/PROVIDER_SETUP.md)** - Configure AI providers
 - **[Examples](guides/EXAMPLES.md)** - See CreateSuite in action
+- **[GLSL Hill-Climb Playbook](guides/GLSL_HILL_CLIMB_PLAYBOOK.md)** - Background shader optimization guide
+- **[Background Evaluation Harness](guides/BACKGROUND_EVALUATION.md)** - How to review shader quality and performance
 - **[Kickoff Project](planning/KICKOFF_PROJECT.md)** - Roadmap and milestones
 - **[GitHub Issues](https://github.com/awelcing-alm/createsuite/issues)** - Report bugs and request features
 
@@ -169,6 +173,6 @@ Focus areas for improvement:
 
 ---
 
-**Last Updated:** 2026-01-28
+**Last Updated:** 2026-04-13
 **Documentation Version:** 1.0
 **Maintainer:** CreateSuite Development Team

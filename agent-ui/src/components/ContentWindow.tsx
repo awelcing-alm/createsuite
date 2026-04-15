@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import Draggable from 'react-draggable';
 import { macosTheme } from '../theme/macos';
-import { X, Minus, Maximize2 } from 'lucide-react';
+import { XIcon, MinusIcon, Maximize2Icon } from './ui/InlineIcon';
 
 // Animations
 const fadeIn = keyframes`
@@ -19,29 +19,35 @@ const minimizeOut = keyframes`
 const WindowWrapper = styled.div<{ $minimized?: boolean }>`
   position: absolute;
   animation: ${fadeIn} 0.2s ease-out;
-  
-  ${props => props.$minimized && `
+
+  ${props =>
+    props.$minimized &&
+    `
     animation: ${minimizeOut} 0.3s ease-out forwards;
     pointer-events: none;
   `}
 `;
 
 const Window = styled.div<{ $active?: boolean; $maximized?: boolean }>`
-  width: ${props => props.$maximized ? '100vw' : 'min(600px, calc(100vw - 100px))'};
-  height: ${props => props.$maximized ? 'calc(100vh - 108px)' : 'min(400px, calc(100vh - 100px))'};
-  min-width: ${props => props.$maximized ? 'unset' : '300px'};
-  min-height: ${props => props.$maximized ? 'unset' : '200px'};
+  width: ${props => (props.$maximized ? '100vw' : 'min(600px, calc(100vw - 100px))')};
+  height: ${props =>
+    props.$maximized ? 'calc(100vh - 108px)' : 'min(400px, calc(100vh - 100px))'};
+  min-width: ${props => (props.$maximized ? 'unset' : '300px')};
+  min-height: ${props => (props.$maximized ? 'unset' : '200px')};
   background: rgba(40, 40, 45, 0.95);
-  border-radius: ${props => props.$maximized ? '0' : '10px'};
+  border-radius: ${props => (props.$maximized ? '0' : '10px')};
   overflow: hidden;
-  box-shadow: ${props => props.$active 
-    ? '0 22px 70px 4px rgba(0, 0, 0, 0.56), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset'
-    : '0 10px 30px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset'};
+  box-shadow: ${props =>
+    props.$active
+      ? '0 22px 70px 4px rgba(0, 0, 0, 0.56), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset'
+      : '0 10px 30px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset'};
   display: flex;
   flex-direction: column;
   transition: all 0.25s ease;
-  
-  ${props => props.$maximized && `
+
+  ${props =>
+    props.$maximized &&
+    `
     position: fixed;
     top: 28px;
     left: 0;
@@ -50,9 +56,10 @@ const Window = styled.div<{ $active?: boolean; $maximized?: boolean }>`
 
 const TitleBar = styled.div<{ $active?: boolean }>`
   height: 38px;
-  background: ${props => props.$active 
-    ? 'linear-gradient(180deg, #3a3a3c 0%, #2c2c2e 100%)'
-    : 'linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%)'};
+  background: ${props =>
+    props.$active
+      ? 'linear-gradient(180deg, #3a3a3c 0%, #2c2c2e 100%)'
+      : 'linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%)'};
   display: flex;
   align-items: center;
   padding: 0 12px;
@@ -68,7 +75,10 @@ const TrafficLights = styled.div`
   align-items: center;
 `;
 
-const TrafficLight = styled.button<{ $color: 'close' | 'minimize' | 'maximize'; $active?: boolean }>`
+const TrafficLight = styled.button<{
+  $color: 'close' | 'minimize' | 'maximize';
+  $active?: boolean;
+}>`
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -79,26 +89,32 @@ const TrafficLight = styled.button<{ $color: 'close' | 'minimize' | 'maximize'; 
   align-items: center;
   justify-content: center;
   transition: all 0.15s ease;
-  
+
   background: ${props => {
     if (!props.$active) return '#4a4a4c';
     switch (props.$color) {
-      case 'close': return '#ff5f57';
-      case 'minimize': return '#febc2e';
-      case 'maximize': return '#28c840';
+      case 'close':
+        return '#ff5f57';
+      case 'minimize':
+        return '#febc2e';
+      case 'maximize':
+        return '#28c840';
     }
   }};
-  
+
   &:hover {
     background: ${props => {
       switch (props.$color) {
-        case 'close': return '#ff3b30';
-        case 'minimize': return '#ff9500';
-        case 'maximize': return '#34c759';
+        case 'close':
+          return '#ff3b30';
+        case 'minimize':
+          return '#ff9500';
+        case 'maximize':
+          return '#34c759';
       }
     }};
   }
-  
+
   svg {
     width: 8px;
     height: 8px;
@@ -106,7 +122,7 @@ const TrafficLight = styled.button<{ $color: 'close' | 'minimize' | 'maximize'; 
     color: rgba(0, 0, 0, 0.6);
     transition: opacity 0.1s;
   }
-  
+
   ${TrafficLights}:hover & svg {
     opacity: 1;
   }
@@ -146,19 +162,19 @@ interface ContentWindowProps {
   onMaximize?: () => void;
 }
 
-const ContentWindow: React.FC<ContentWindowProps> = ({ 
-  id, 
-  title, 
+const ContentWindow: React.FC<ContentWindowProps> = ({
+  id,
+  title,
   type,
   content,
-  onClose, 
-  zIndex, 
+  onClose,
+  zIndex,
   onFocus,
   initialPosition = { x: 50, y: 50 },
   minimized = false,
   maximized = false,
   onMinimize,
-  onMaximize
+  onMaximize,
 }) => {
   const nodeRef = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState(true);
@@ -185,48 +201,57 @@ const ContentWindow: React.FC<ContentWindowProps> = ({
         <Window $active={isActive} $maximized={maximized} onMouseDown={handleFocus}>
           <TitleBar className="title-bar" $active={isActive}>
             <TrafficLights>
-              <TrafficLight 
-                $color="close" 
+              <TrafficLight
+                $color="close"
                 $active={isActive}
-                onClick={(e) => { e.stopPropagation(); onClose(id); }}
+                onClick={e => {
+                  e.stopPropagation();
+                  onClose(id);
+                }}
               >
-                <X size={8} strokeWidth={2.5} />
+                <XIcon size={8} strokeWidth={2.5} />
               </TrafficLight>
-              <TrafficLight 
-                $color="minimize" 
+              <TrafficLight
+                $color="minimize"
                 $active={isActive}
-                onClick={(e) => { e.stopPropagation(); onMinimize?.(); }}
+                onClick={e => {
+                  e.stopPropagation();
+                  onMinimize?.();
+                }}
               >
-                <Minus size={8} strokeWidth={2.5} />
+                <MinusIcon size={8} strokeWidth={2.5} />
               </TrafficLight>
-              <TrafficLight 
-                $color="maximize" 
+              <TrafficLight
+                $color="maximize"
                 $active={isActive}
-                onClick={(e) => { e.stopPropagation(); onMaximize?.(); }}
+                onClick={e => {
+                  e.stopPropagation();
+                  onMaximize?.();
+                }}
               >
-                <Maximize2 size={6} strokeWidth={2.5} />
+                <Maximize2Icon size={6} strokeWidth={2.5} />
               </TrafficLight>
             </TrafficLights>
             <Title>{title}</Title>
             <div style={{ width: 52 }} />
           </TitleBar>
-          
+
           <ContentArea>
             {type === 'image' && (
-              <img 
-                src={content} 
-                alt={title} 
-                style={{ 
-                  maxWidth: '100%', 
-                  maxHeight: '100%', 
-                  objectFit: 'contain' 
-                }} 
+              <img
+                src={content}
+                alt={title}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                }}
               />
             )}
             {type === 'browser' && (
-              <iframe 
-                src={content} 
-                style={{ width: '100%', height: '100%', border: 'none' }} 
+              <iframe
+                src={content}
+                style={{ width: '100%', height: '100%', border: 'none' }}
                 title={title}
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
               />

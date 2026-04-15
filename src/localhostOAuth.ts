@@ -40,11 +40,8 @@ export class LocalhostOAuth {
    */
   private generatePKCE(): { codeVerifier: string; codeChallenge: string } {
     const codeVerifier = crypto.randomBytes(32).toString('base64url');
-    const codeChallenge = crypto
-      .createHash('sha256')
-      .update(codeVerifier)
-      .digest('base64url');
-    
+    const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
+
     return { codeVerifier, codeChallenge };
   }
 
@@ -202,7 +199,7 @@ export class LocalhostOAuth {
       // Start server
       this.server.listen(this.port, () => {
         console.log(chalk.blue(`\n🌐 OAuth server started on http://localhost:${this.port}`));
-        
+
         // Build authorization URL
         const authUrl = new URL(options.authorizationUrl);
         authUrl.searchParams.set('response_type', 'code');
@@ -218,7 +215,7 @@ export class LocalhostOAuth {
         }
 
         const authUrlString = authUrl.toString();
-        
+
         console.log(chalk.yellow('\n🔐 Opening browser for authentication...'));
         console.log(chalk.gray(`If the browser doesn't open, visit:\n${authUrlString}\n`));
 
@@ -227,7 +224,7 @@ export class LocalhostOAuth {
       });
 
       // Handle server errors
-      this.server.on('error', (err) => {
+      this.server.on('error', err => {
         console.error(chalk.red('Server error:'), err);
         this.cleanup();
         reject(err);
@@ -248,7 +245,7 @@ export class LocalhostOAuth {
     body.set('code', code);
     body.set('redirect_uri', options.redirectUri || this.redirectUri);
     body.set('code_verifier', codeVerifier);
-    
+
     if (options.clientId) {
       body.set('client_id', options.clientId);
     }
@@ -298,11 +295,11 @@ export class LocalhostOAuth {
     }
 
     try {
-      spawn(command, [url], { 
+      spawn(command, [url], {
         detached: true,
-        stdio: 'ignore'
+        stdio: 'ignore',
       }).unref();
-    } catch (error) {
+    } catch {
       console.log(chalk.yellow('⚠️  Could not open browser automatically'));
       console.log(chalk.gray(`Please open this URL manually:\n${url}`));
     }

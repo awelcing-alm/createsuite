@@ -170,13 +170,13 @@ JSON responses expose `cs_id` as `"id"` for tasks and convoys. Agents and messag
 Run all tests:
 
 ```bash
-cd backend && mix test
+cd backend/myapp && mix test
 ```
 
 Run with coverage:
 
 ```bash
-cd backend && mix test --cover
+cd backend/myapp && mix test --cover
 ```
 
 ---
@@ -184,24 +184,29 @@ cd backend && mix test --cover
 ## Quick Reference
 
 ```bash
-# Start development server
-cd backend && mix phx.server
-
-# Run tests
-cd backend && mix test
-
-# Run a single test file
-cd backend && mix test test/backend/tasks_test.exs
+# Start all services (Phoenix + Express + Frontend) from project root
+./scripts/dev.sh start
+./scripts/dev.sh stop
+./scripts/dev.sh status
 
 # Database operations
-cd backend && mix ecto.create       # Create database
-cd backend && mix ecto.migrate      # Run migrations
-cd backend && mix ecto.rollback     # Rollback last migration
-cd backend && mix ecto.reset        # Drop + create + migrate
+./scripts/dev.sh db:setup             # Automated setup (deps + create + migrate)
+cd backend/myapp && mix ecto.reset    # Drop + create + migrate
+
+# Start Phoenix only (standalone)
+cd backend/myapp && mix phx.server
+
+# Run tests
+cd backend/myapp && mix test
+
+# Run a single test file
+cd backend/myapp && mix test test/backend/tasks_test.exs
 
 # Check for compilation warnings
-cd backend && mix compile --warnings-as-errors
+cd backend/myapp && mix compile --warnings-as-errors
 
 # Interactive shell with app running
-cd backend && iex -S mix phx.server
+cd backend/myapp && iex -S mix phx.server
 ```
+
+> **Note**: Use `./scripts/dev.sh start` from the project root to start all services together. The dev.sh script handles PostgreSQL checks, database setup, portless proxy, and health checks automatically. See root [AGENTS.md](../../AGENTS.md) for full dev workflow details.

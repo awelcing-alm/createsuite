@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { Convoy, ConvoyStatus, TaskStatus } from './types';
 import { ConfigManager } from './config';
 import { TaskManager } from './taskManager';
@@ -30,11 +29,7 @@ export class ConvoyManager {
   /**
    * Create a new convoy
    */
-  async createConvoy(
-    name: string,
-    description: string,
-    taskIds: string[] = []
-  ): Promise<Convoy> {
+  async createConvoy(name: string, description: string, taskIds: string[] = []): Promise<Convoy> {
     // Validate that all tasks exist
     for (const taskId of taskIds) {
       const task = await this.taskManager.getTask(taskId);
@@ -49,7 +44,7 @@ export class ConvoyManager {
       description,
       tasks: taskIds,
       createdAt: new Date(),
-      status: ConvoyStatus.ACTIVE
+      status: ConvoyStatus.ACTIVE,
     };
 
     await this.configManager.saveConvoy(convoy);
@@ -78,7 +73,7 @@ export class ConvoyManager {
       if (!task) {
         throw new Error(`Task not found: ${taskId}`);
       }
-      
+
       // Don't add duplicates
       if (!convoy.tasks.includes(taskId)) {
         convoy.tasks.push(taskId);
@@ -122,7 +117,7 @@ export class ConvoyManager {
    */
   async listConvoys(status?: ConvoyStatus): Promise<Convoy[]> {
     let convoys = await this.configManager.listConvoys();
-    
+
     if (status) {
       convoys = convoys.filter(c => c.status === status);
     }
@@ -145,9 +140,7 @@ export class ConvoyManager {
       throw new Error(`Convoy not found: ${convoyId}`);
     }
 
-    const tasks = await Promise.all(
-      convoy.tasks.map(id => this.taskManager.getTask(id))
-    );
+    const tasks = await Promise.all(convoy.tasks.map(id => this.taskManager.getTask(id)));
 
     const validTasks = tasks.filter(t => t !== null);
     const completed = validTasks.filter(t => t!.status === TaskStatus.COMPLETED).length;
@@ -161,7 +154,7 @@ export class ConvoyManager {
       completed,
       inProgress,
       open,
-      percentage
+      percentage,
     };
   }
 }

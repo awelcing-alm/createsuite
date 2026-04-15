@@ -102,3 +102,12 @@
 - `convoy_live/show.ex` reloads both `convoy` and `progress` since `progress` is derived from convoy tasks
 - `task_live/index.ex` passes `socket.assigns.status_filter` to `load_tasks/1` in handle_info — preserves current filter on reload
 - `mix compile` — all 8 LiveView files compiled cleanly with no warnings
+
+## Task: Phoenix Terminal Test Infrastructure (completed)
+- Added backend unit tests at `backend/test/backend/terminal/session_test.exs` covering `start_link/1`, `send_input/2`, and `resize/3`.
+- `start_supervised!/1` is the correct isolation pattern for `Backend.Terminal.Session` tests because these sessions are not started under `Backend.Terminal.Supervisor` when invoked directly in tests.
+- Added channel test support module `BackendWeb.ChannelCase` under `backend/test/support/channel_case.ex` and wired it in `test/test_helper.exs`.
+- Added channel tests at `backend/test/backend_web/channels/terminal_channel_test.exs` covering join, input, and resize event handling.
+- Added frontend Jest test at `agent-ui/src/utils/__tests__/terminalChannel.test.ts` with Phoenix socket/channel mocks and push assertions for `input`/`resize`.
+- Added Jest infrastructure in `agent-ui` (`test` script, `jest.config.cjs`, `tsconfig.test.json`, and Jest dev dependencies) so TypeScript tests run locally.
+- Added integration launcher script `scripts/test-phoenix-terminal.sh` for booting Phoenix and frontend together with health checks.

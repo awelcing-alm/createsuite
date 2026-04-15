@@ -138,7 +138,7 @@ All endpoints return `{ "success": boolean, "data": T | null, "error": string | 
 ### First-Time Setup
 
 ```bash
-cd backend
+cd backend/myapp
 
 # Install dependencies
 mix deps.get
@@ -155,6 +155,8 @@ Phoenix is now running at [http://localhost:4000](http://localhost:4000).
 
 - API: `http://localhost:4000/api/health`
 - Dashboard: `http://localhost:4000/dashboard`
+
+> **Tip**: Use `./scripts/dev.sh start` from the project root to start all services (Phoenix + Express + Frontend) with automatic database setup.
 
 ### Development Workflow
 
@@ -183,26 +185,31 @@ mix ecto.reset
 
 ### Running the Full Stack
 
-The full development stack requires three processes:
+Use the dev orchestration script from the project root:
 
 ```bash
-# Terminal 1 — Phoenix backend (API + Dashboard)
-cd backend && mix phx.server
-
-# Terminal 2 — Express server (Socket.IO + PTY)
-cd agent-ui && node server/index.js
-
-# Terminal 3 — Vite dev server (React UI)
-cd agent-ui && npm run dev
+./scripts/dev.sh start     # Start all services
+./scripts/dev.sh status    # Show running services
+./scripts/dev.sh stop      # Stop all services
 ```
 
-| Service | Port | Purpose |
-|---------|------|---------|
-| Phoenix | 4000 | REST API + LiveView dashboard |
-| Express | 3001 | Socket.IO + terminal (PTY) |
-| Vite | 5173 | React agent-ui (proxies `/api` to 4000) |
+Or via npm:
 
-The Vite proxy in `agent-ui/vite.config.ts` routes `/api/*` requests to Phoenix on port 4000.
+```bash
+npm run dev:all            # Start
+npm run dev:stop           # Stop
+npm run dev:status         # Status
+```
+
+| Service | Port | Portless URL | Purpose |
+|---------|------|-------------|---------|
+| Phoenix | 4000 | http://phoenix.localhost | REST API + LiveView dashboard |
+| Express | 3001 | http://express.localhost | Socket.IO + terminal (PTY) |
+| Frontend | 5173 | http://frontend.localhost | React agent-ui |
+
+**Prerequisites**: `portless` CLI (`npm install -g portless`), PostgreSQL on localhost:5432
+
+The script handles: portless proxy, PostgreSQL check, database setup (first run), service startup, health checks, PID tracking, and graceful shutdown.
 
 ---
 

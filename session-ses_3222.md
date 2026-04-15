@@ -519,7 +519,7 @@ User has answered your questions: "Plan is ready. How would you like to proceed?
 
 ---
 
-## Assistant (Prometheus (Plan Builder) · claude-opus-4-6 · 10.7s)
+## Assistant (0o (Plan Builder) · claude-opus-4-6 · 10.7s)
 
 **Tool: todowrite**
 

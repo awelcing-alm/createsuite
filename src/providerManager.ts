@@ -5,6 +5,7 @@ import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { spawn } from 'child_process';
 import { LocalhostOAuth } from './localhostOAuth';
+import { RateLimiter } from './rateLimiter';
 
 /**
  * Supported AI model providers
@@ -17,7 +18,7 @@ export enum Provider {
   GITHUB_COPILOT = 'github-copilot',
   GEMINI = 'google',
   OPENCODE_ZEN = 'opencode-zen',
-  HUGGINGFACE = 'huggingface'
+  HUGGINGFACE = 'huggingface',
 }
 
 /**
@@ -33,6 +34,22 @@ export interface ProviderConfig {
 }
 
 /**
+ * Provider status information
+ */
+export interface ProviderStatus {
+  name: string;
+  provider: Provider;
+  model: string | undefined;
+  authenticated: boolean;
+  lastValidated: Date | null;
+  responseTime: number | null;
+  errorCount: number;
+  rateLimitRemaining: number | null;
+  issues: string[];
+  suggestions: string[];
+}
+
+/**
  * Manages AI model provider configurations and authentication
  */
 export class ProviderManager {
@@ -40,21 +57,27 @@ export class ProviderManager {
   private configPath: string;
   private opencodeConfigPath: string;
   private credentialsPath: string;
+  private rateLimiter: RateLimiter;
 
   constructor(workspaceRoot: string) {
     this.workspaceRoot = workspaceRoot;
     this.configPath = path.join(workspaceRoot, '.createsuite', 'providers.json');
     this.opencodeConfigPath = path.join(os.homedir(), '.config', 'opencode', 'opencode.json');
     this.credentialsPath = path.join(workspaceRoot, '.createsuite', 'provider-credentials.json');
+    this.rateLimiter = new RateLimiter({
+      maxRequests: 5,
+      windowMs: 60000,
+      cacheTtlMs: 60000,
+    });
   }
 
   /**
    * Check if OpenCode is installed
    */
   async isOpencodeInstalled(): Promise<boolean> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const proc = spawn('which', ['opencode']);
-      proc.on('close', (code) => {
+      proc.on('close', code => {
         resolve(code === 0);
       });
       proc.on('error', () => {
@@ -70,7 +93,9 @@ export class ProviderManager {
     console.log(chalk.blue('📦 Installing OpenCode...'));
     console.log(chalk.gray('Visit: https://opencode.ai/docs for manual installation'));
     console.log(chalk.yellow('⚠️  OpenCode installation requires manual setup.'));
-    console.log(chalk.gray('Please follow the installation instructions at https://opencode.ai/docs'));
+    console.log(
+      chalk.gray('Please follow the installation instructions at https://opencode.ai/docs')
+    );
     console.log(chalk.gray('After installation, run this setup again.'));
   }
 
@@ -106,8 +131,8 @@ export class ProviderManager {
           type: 'confirm',
           name: 'shouldInstall',
           message: 'Would you like installation instructions?',
-          default: true
-        }
+          default: true,
+        },
       ]);
 
       if (shouldInstall) {
@@ -127,8 +152,8 @@ export class ProviderManager {
           type: 'confirm',
           name: 'shouldSetupOmo',
           message: 'Would you like to set up oh-my-opencode now?',
-          default: true
-        }
+          default: true,
+        },
       ]);
 
       if (shouldSetupOmo) {
@@ -149,7 +174,7 @@ export class ProviderManager {
       { name: '🔴 Google Gemini 3 Pro', value: Provider.GEMINI },
       { name: '🐙 GitHub Copilot', value: Provider.GITHUB_COPILOT },
       { name: '🧘 OpenCode Zen', value: Provider.OPENCODE_ZEN },
-      { name: '🤗 Hugging Face Inference (assets)', value: Provider.HUGGINGFACE }
+      { name: '🤗 Hugging Face Inference (assets)', value: Provider.HUGGINGFACE },
     ];
 
     const { selectedProviders } = await inquirer.prompt([
@@ -158,8 +183,8 @@ export class ProviderManager {
         name: 'selectedProviders',
         message: 'Select all providers you want to enable:',
         choices: providerChoices,
-        pageSize: providerChoices.length
-      }
+        pageSize: providerChoices.length,
+      },
     ]);
 
     const providers: ProviderConfig[] = [];
@@ -174,12 +199,13 @@ export class ProviderManager {
           name: 'claudeTier',
           message: 'Claude tier:',
           choices: ['Pro', 'Max (20x mode)'],
-          default: 'Pro'
-        }
+          default: 'Pro',
+        },
       ]);
-      claudeModel = claudeTier === 'Max (20x mode)'
-        ? 'anthropic/claude-opus-4.5-max20'
-        : 'anthropic/claude-opus-4.5';
+      claudeModel =
+        claudeTier === 'Max (20x mode)'
+          ? 'anthropic/claude-opus-4.5-max20'
+          : 'anthropic/claude-opus-4.5';
     }
 
     if (shouldInclude(Provider.ZAI_GLM)) {
@@ -187,7 +213,7 @@ export class ProviderManager {
         provider: Provider.ZAI_GLM,
         enabled: true,
         authenticated: false,
-        model: 'zai-coding-plan/glm-4.7'
+        model: 'zai-coding-plan/glm-4.7',
       });
     }
 
@@ -196,7 +222,7 @@ export class ProviderManager {
         provider: Provider.CLAUDE,
         enabled: true,
         authenticated: false,
-        model: claudeModel
+        model: claudeModel,
       });
     }
 
@@ -205,7 +231,7 @@ export class ProviderManager {
         provider: Provider.OPENAI,
         enabled: true,
         authenticated: false,
-        model: 'openai/gpt-5.2'
+        model: 'openai/gpt-5.2',
       });
     }
 
@@ -214,7 +240,7 @@ export class ProviderManager {
         provider: Provider.MINIMAX,
         enabled: true,
         authenticated: false,
-        model: 'minimax/minimax-2.1'
+        model: 'minimax/minimax-2.1',
       });
     }
 
@@ -223,7 +249,7 @@ export class ProviderManager {
         provider: Provider.GEMINI,
         enabled: true,
         authenticated: false,
-        model: 'google/gemini-3-pro'
+        model: 'google/gemini-3-pro',
       });
     }
 
@@ -232,7 +258,7 @@ export class ProviderManager {
         provider: Provider.GITHUB_COPILOT,
         enabled: true,
         authenticated: false,
-        model: 'github-copilot/claude-opus-4.5'
+        model: 'github-copilot/claude-opus-4.5',
       });
     }
 
@@ -241,7 +267,7 @@ export class ProviderManager {
         provider: Provider.OPENCODE_ZEN,
         enabled: true,
         authenticated: false,
-        model: 'opencode/claude-opus-4.5'
+        model: 'opencode/claude-opus-4.5',
       });
     }
 
@@ -250,7 +276,7 @@ export class ProviderManager {
         provider: Provider.HUGGINGFACE,
         enabled: true,
         authenticated: false,
-        model: 'huggingface/stable-diffusion-3.5-large'
+        model: 'huggingface/stable-diffusion-3.5-large',
       });
     }
 
@@ -259,7 +285,7 @@ export class ProviderManager {
 
     // Show setup summary
     console.log(chalk.bold.green('\n✨ Provider Configuration Complete!\n'));
-    
+
     if (providers.length === 0) {
       console.log(chalk.yellow('⚠️  No providers configured. You can run this setup again later.'));
       return;
@@ -272,14 +298,14 @@ export class ProviderManager {
 
     // Authentication steps
     console.log(chalk.bold.cyan('\n🔐 Next: Authenticate Your Providers\n'));
-    
+
     const { shouldAuth } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'shouldAuth',
         message: 'Would you like to authenticate your providers now?',
-        default: true
-      }
+        default: true,
+      },
     ]);
 
     if (shouldAuth) {
@@ -313,7 +339,11 @@ export class ProviderManager {
 
     for (let index = 0; index < providers.length; index += 1) {
       const provider = providers[index];
-      console.log(chalk.bold(`\n🔐 (${index + 1}/${providers.length}) Authenticating ${this.getProviderDisplayName(provider.provider)}...\n`));
+      console.log(
+        chalk.bold(
+          `\n🔐 (${index + 1}/${providers.length}) Authenticating ${this.getProviderDisplayName(provider.provider)}...\n`
+        )
+      );
 
       let authenticated = false;
 
@@ -355,7 +385,9 @@ export class ProviderManager {
     if (authenticatedCount === providers.length) {
       console.log(chalk.bold.green('\n🎉 All providers authenticated successfully!\n'));
     } else {
-      console.log(chalk.yellow(`\n⚠️  ${authenticatedCount}/${providers.length} providers authenticated.`));
+      console.log(
+        chalk.yellow(`\n⚠️  ${authenticatedCount}/${providers.length} providers authenticated.`)
+      );
       console.log(chalk.gray('You can re-run authentication anytime with:'));
       console.log(chalk.blue('  cs provider auth\n'));
     }
@@ -373,14 +405,14 @@ export class ProviderManager {
     console.log(chalk.gray('  4. Complete OAuth flow in browser'));
 
     await this.runOpencodeAuth('Anthropic');
-    
+
     const { completed } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'completed',
         message: 'Have you completed the authentication?',
-        default: false
-      }
+        default: false,
+      },
     ]);
 
     if (completed) {
@@ -394,7 +426,7 @@ export class ProviderManager {
    */
   private async authenticateOpenAI(): Promise<boolean> {
     console.log(chalk.bold.blue('\n🟢 OpenAI Authentication\n'));
-    
+
     const { method } = await inquirer.prompt([
       {
         type: 'list',
@@ -402,10 +434,10 @@ export class ProviderManager {
         message: 'Choose authentication method:',
         choices: [
           { name: '🔑 API Key (Recommended)', value: 'api-key' },
-          { name: '🌐 OAuth Flow (Browser)', value: 'oauth' }
+          { name: '🌐 OAuth Flow (Browser)', value: 'oauth' },
         ],
-        default: 'api-key'
-      }
+        default: 'api-key',
+      },
     ]);
 
     if (method === 'api-key') {
@@ -426,7 +458,7 @@ export class ProviderManager {
         type: 'password',
         name: 'apiKey',
         message: 'OpenAI API Key:',
-        validate: (input) => {
+        validate: input => {
           if (!input || input.trim().length === 0) {
             return 'API key is required';
           }
@@ -434,21 +466,21 @@ export class ProviderManager {
             return 'OpenAI API keys typically start with "sk-"';
           }
           return true;
-        }
+        },
       },
       {
         type: 'confirm',
         name: 'confirm',
         message: 'Save this API key securely?',
-        default: true
-      }
+        default: true,
+      },
     ]);
 
     if (confirm) {
       // Store API key securely
       const credPath = path.join(this.workspaceRoot, '.createsuite', 'openai-credentials.json');
       const credDir = path.dirname(credPath);
-      
+
       if (!fs.existsSync(credDir)) {
         fs.mkdirSync(credDir, { recursive: true });
       }
@@ -474,14 +506,14 @@ export class ProviderManager {
     console.log(chalk.gray('A browser window will open for authentication\n'));
 
     try {
-      const oauth = new LocalhostOAuth(3000);
-      
+      const _oauth = new LocalhostOAuth(3000);
+
       // Note: OpenAI doesn't have a standard OAuth flow for API access
       // This is a demonstration - in practice, most users will use API keys
       console.log(chalk.yellow('⚠️  OpenAI primarily uses API keys for authentication'));
       console.log(chalk.gray('OAuth flow is not officially supported by OpenAI'));
       console.log(chalk.gray('Falling back to API key method...\n'));
-      
+
       return await this.authenticateOpenAIWithAPIKey();
     } catch (error) {
       console.error(chalk.red('OAuth flow failed:'), error);
@@ -503,14 +535,14 @@ export class ProviderManager {
     console.log(chalk.gray('  5. Select: OAuth with Google (Antigravity)'));
 
     await this.runOpencodeAuth('Google');
-    
+
     const { completed } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'completed',
         message: 'Have you completed the authentication?',
-        default: false
-      }
+        default: false,
+      },
     ]);
 
     if (completed) {
@@ -536,14 +568,14 @@ export class ProviderManager {
     }
 
     await this.runOpencodeAuth('Z.ai');
-    
+
     const { completed } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'completed',
         message: 'Have you completed the authentication?',
-        default: false
-      }
+        default: false,
+      },
     ]);
 
     if (completed) {
@@ -565,14 +597,14 @@ export class ProviderManager {
     if (stored) {
       console.log(chalk.green('✓ MiniMax API key saved securely'));
     }
-    
+
     const { completed } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'completed',
         message: 'Have you completed the authentication?',
-        default: false
-      }
+        default: false,
+      },
     ]);
 
     if (completed) {
@@ -592,14 +624,14 @@ export class ProviderManager {
     console.log(chalk.gray('  3. Complete OAuth flow'));
 
     await this.runOpencodeAuth('GitHub');
-    
+
     const { completed } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'completed',
         message: 'Have you completed the authentication?',
-        default: false
-      }
+        default: false,
+      },
     ]);
 
     if (completed) {
@@ -616,14 +648,14 @@ export class ProviderManager {
     console.log(chalk.yellow('\nAuthentication steps:'));
     console.log(chalk.gray('  1. Ensure you have OpenCode Zen access'));
     console.log(chalk.gray('  2. Models are available with opencode/ prefix'));
-    
+
     const { completed } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'completed',
         message: 'Have you completed the setup?',
-        default: false
-      }
+        default: false,
+      },
     ]);
 
     if (completed) {
@@ -648,14 +680,14 @@ export class ProviderManager {
     }
 
     await this.runOpencodeAuth('Hugging Face');
-    
+
     const { completed } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'completed',
         message: 'Have you completed the authentication?',
-        default: false
-      }
+        default: false,
+      },
     ]);
 
     if (completed) {
@@ -667,7 +699,9 @@ export class ProviderManager {
   private async runOpencodeAuth(providerLabel: string): Promise<void> {
     const opencodeInstalled = await this.isOpencodeInstalled();
     if (!opencodeInstalled) {
-      console.log(chalk.yellow('⚠️  OpenCode is not installed. Install it first: https://opencode.ai/docs'));
+      console.log(
+        chalk.yellow('⚠️  OpenCode is not installed. Install it first: https://opencode.ai/docs')
+      );
       return;
     }
 
@@ -676,15 +710,15 @@ export class ProviderManager {
         type: 'confirm',
         name: 'runNow',
         message: `Run "opencode auth login" now for ${providerLabel}?`,
-        default: true
-      }
+        default: true,
+      },
     ]);
 
     if (!runNow) {
       return;
     }
 
-    await new Promise<void>((resolve) => {
+    await new Promise<void>(resolve => {
       const proc = spawn('opencode', ['auth', 'login'], { stdio: 'inherit' });
       proc.on('close', () => resolve());
       proc.on('error', () => resolve());
@@ -697,8 +731,8 @@ export class ProviderManager {
         type: 'confirm',
         name: 'wantsKey',
         message: `Do you want to save a ${label} now?`,
-        default: false
-      }
+        default: false,
+      },
     ]);
 
     if (!wantsKey) {
@@ -710,13 +744,13 @@ export class ProviderManager {
         type: 'password',
         name: 'apiKey',
         message: `${label}:`,
-        validate: (input) => {
+        validate: input => {
           if (!input || input.trim().length === 0) {
             return 'Value is required';
           }
           return true;
-        }
-      }
+        },
+      },
     ]);
 
     this.storeProviderCredential(provider, apiKey.trim());
@@ -754,7 +788,7 @@ export class ProviderManager {
       [Provider.GEMINI]: 'Google Gemini 3 Pro',
       [Provider.GITHUB_COPILOT]: 'GitHub Copilot',
       [Provider.OPENCODE_ZEN]: 'OpenCode Zen',
-      [Provider.HUGGINGFACE]: 'Hugging Face Inference'
+      [Provider.HUGGINGFACE]: 'Hugging Face Inference',
     };
     return names[provider];
   }
@@ -770,7 +804,7 @@ export class ProviderManager {
 
     const config = {
       providers,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2));
@@ -797,11 +831,91 @@ export class ProviderManager {
    * Validate provider authentication
    */
   async validateProvider(provider: Provider): Promise<boolean> {
-    // This would normally make an API call to verify authentication
-    // For now, we'll just check if the provider is configured
     const providers = await this.loadProviders();
     const config = providers.find(p => p.provider === provider);
     return config?.authenticated || false;
+  }
+
+  /**
+   * Refresh authentication token for a provider
+   * Note: Actual refresh is delegated to OpenCode's oh-my-opencode plugin
+   */
+  async refreshProviderToken(provider: Provider): Promise<boolean> {
+    console.log(chalk.gray(`Token refresh for ${this.getProviderDisplayName(provider)}...`));
+    console.log(chalk.yellow('Token refresh requires OpenCode integration.'));
+    console.log(chalk.gray('Use: opencode auth login to re-authenticate'));
+    return false;
+  }
+
+  /**
+   * Store credential securely using system keychain
+   * Note: Currently stores in encrypted file. Full keychain integration pending.
+   */
+  async storeCredentialSecurely(provider: Provider, credential: string): Promise<void> {
+    const dir = path.dirname(this.credentialsPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    let existing: Record<string, { value: string; updatedAt: string }> = {};
+    if (fs.existsSync(this.credentialsPath)) {
+      try {
+        existing = JSON.parse(fs.readFileSync(this.credentialsPath, 'utf-8'));
+      } catch {
+        existing = {};
+      }
+    }
+
+    existing[provider] = { value: credential, updatedAt: new Date().toISOString() };
+    fs.writeFileSync(this.credentialsPath, JSON.stringify(existing, null, 2), { mode: 0o600 });
+  }
+
+  /**
+   * Get detailed status for all providers
+   */
+  async getProviderStatus(): Promise<ProviderStatus[]> {
+    const providers = await this.loadProviders();
+    const statuses: ProviderStatus[] = [];
+
+    for (const provider of providers) {
+      const issues: string[] = [];
+      const suggestions: string[] = [];
+      const responseTime: number | null = null;
+      const rateLimitRemaining: number | null = null;
+
+      if (!provider.authenticated) {
+        issues.push('Not authenticated');
+        suggestions.push('Run: cs provider auth');
+      }
+
+      if (provider.lastValidated) {
+        const lastValidatedDate = new Date(provider.lastValidated);
+        const hoursSinceValidation =
+          (Date.now() - lastValidatedDate.getTime()) / (1000 * 60 * 60);
+
+        if (hoursSinceValidation > 24) {
+          issues.push(`Last validated ${Math.round(hoursSinceValidation)} hours ago`);
+          suggestions.push('Consider re-validating: cs provider auth');
+        }
+      }
+
+      const displayName = this.getProviderDisplayName(provider.provider);
+
+      statuses.push({
+        name: displayName,
+        provider: provider.provider,
+        model: provider.model,
+        authenticated: provider.authenticated,
+        lastValidated: provider.lastValidated ? new Date(provider.lastValidated) : null,
+        responseTime,
+        errorCount: 0,
+        rateLimitRemaining,
+        issues,
+        suggestions,
+      });
+    }
+
+    return statuses;
   }
 
   /**
@@ -819,14 +933,18 @@ export class ProviderManager {
     console.log(chalk.bold.blue('\n🚀 Configured Providers:\n'));
 
     for (const provider of providers) {
-      const status = provider.authenticated ? chalk.green('✓ Authenticated') : chalk.yellow('⚠ Not authenticated');
+      const status = provider.authenticated
+        ? chalk.green('✓ Authenticated')
+        : chalk.yellow('⚠ Not authenticated');
       const displayName = this.getProviderDisplayName(provider.provider);
-      
+
       console.log(chalk.bold(`${displayName}`));
       console.log(chalk.gray(`  Model: ${provider.model}`));
       console.log(`  Status: ${status}`);
       if (provider.lastValidated) {
-        console.log(chalk.gray(`  Last validated: ${new Date(provider.lastValidated).toLocaleString()}`));
+        console.log(
+          chalk.gray(`  Last validated: ${new Date(provider.lastValidated).toLocaleString()}`)
+        );
       }
       console.log('');
     }

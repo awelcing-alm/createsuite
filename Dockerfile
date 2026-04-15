@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip make g++ sudo locales \
     libncurses5-dev libncursesw5-dev libssl-dev \
     inotify-tools jq ripgrep fd-find fzf htop \
-    unzip zip vim-tiny zsh \
+    unzip zip vim-tiny zsh postgresql postgresql-contrib lsof \
     && rm -rf /var/lib/apt/lists/*
 
 # --- 2. Node.js (22.x) & Bun ---
@@ -24,12 +24,23 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && rm -rf /var/lib/apt/lists/*
 ENV PATH="/root/.bun/bin:${PATH}"
 
-# --- 3. Rust (For High-Performance NIFs & CLI Tools) ---
+# --- 3. Rust Toolchain (for NIFs; keep but don't compile heavy tools from source) ---
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-# --- 4. Modern CLI Replacements (The "Power" Tools) ---
-RUN cargo install eza bat zoxide starship
+# --- 4. Modern CLI Replacements (pre-built binaries for speed) ---
+RUN \
+    # eza
+    EZA_VERSION=$(curl -sL https://api.github.com/repos/eza-community/eza/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/') && \
+    curl -fsSL "https://github.com/eza-community/eza/releases/download/${EZA_VERSION}/eza_x86_64-unknown-linux-gnu.tar.gz" | tar xz -C /usr/local/bin && \
+    # bat
+    BAT_VERSION=$(curl -sL https://api.github.com/repos/sharkdp/bat/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/') && \
+    curl -fsSL "https://github.com/sharkdp/bat/releases/download/${BAT_VERSION}/bat-${BAT_VERSION}-x86_64-unknown-linux-gnu.tar.gz" | tar xzO "bat-${BAT_VERSION}-x86_64-unknown-linux-gnu/bat" > /usr/local/bin/bat && chmod +x /usr/local/bin/bat && \
+    # zoxide
+    ZOXIDE_VERSION=$(curl -sL https://api.github.com/repos/ajeetdsouza/zoxide/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/') && \
+    curl -fsSL "https://github.com/ajeetdsouza/zoxide/releases/download/${ZOXIDE_VERSION}/zoxide-${ZOXIDE_VERSION}-x86_64-unknown-linux-gnu.tar.gz" | tar xz -C /usr/local/bin zoxide && \
+    # starship
+    curl -fsSL https://starship.rs/install.sh | sh -s -- -y -b /usr/local/bin
 
 # --- 5. Ghostty Terminfo (For the ultimate terminal experience) ---
 RUN mkdir -p /usr/share/terminfo/x && \
@@ -50,7 +61,9 @@ RUN curl -fsSL https://opencode.ai/install | bash
 ENV PATH="/root/.opencode/bin:${PATH}"
 
 # --- 8. Zsh Setup (Oh My Zsh + Customizations) ---
-RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+# Shallow clone for much faster image builds
+RUN git clone --depth 1 https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh && \
+    cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
 
 RUN mkdir -p ~/.config && cat <<'EOF' > ~/.config/starship.toml
 "$schema" = 'https://starship.rs/config-schema.json'
@@ -114,11 +127,19 @@ printf "\e[2m%s\e[0m\n\n" "startup telemetry: stable | prompt diagnostics: clear
 EOF
 RUN chmod +x /usr/local/bin/createsuite-startup-art
 
-# --- 10. Elixir/Mix Optimization ---
+# --- 9. Portless proxy (required by dev.sh) ---
+RUN npm install -g portless
+
+# --- 10. PostgreSQL Setup ---
+# Configure for local development (trust auth, listen on all interfaces)
+RUN sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/*/main/postgresql.conf \
+    && echo "host all all 0.0.0.0/0 trust" >> /etc/postgresql/*/main/pg_hba.conf
+
+# --- 11. Elixir/Mix Optimization ---
 RUN mix local.hex --force && \
     mix local.rebar --force
 
-# --- 11. Environment Tuning ---
+# --- 12. Environment Tuning ---
 WORKDIR /workspaces/createsuite
 ENV NODE_ENV=development
 ENV MIX_ENV=dev

@@ -20,17 +20,38 @@ A nostalgic macOS-styled desktop environment for orchestrating AI coding agents.
 
 ## 🚀 Quick Start
 
-### One Command (Development)
+### All Services (Recommended)
+
+From the project root, a single command starts Phoenix backend, Express server, and Vite frontend:
 
 ```bash
-# In the agent-ui directory
-npm install && npm run dev
+# Install dependencies
+npm install && cd agent-ui && npm install && cd server && npm install
 
-# In another terminal
-cd server && npm install && node index.js
+# Start all services
+./scripts/dev.sh start
+
+# Check status
+./scripts/dev.sh status
+
+# Stop all services
+./scripts/dev.sh stop
 ```
 
-Then open **http://localhost:5173** — you'll see a welcome wizard! 🎉
+Services are available at:
+- **http://frontend.localhost** — React agent-ui
+- **http://phoenix.localhost** — Phoenix REST API + LiveView dashboard
+- **http://express.localhost** — Express API + Socket.IO
+
+**Prerequisites**: `portless` CLI (`npm install -g portless`), PostgreSQL on localhost:5432
+
+### Frontend Only
+
+```bash
+cd agent-ui && npm install && npm run dev
+```
+
+Then open **http://localhost:5173** — note: API calls will 404 without Phoenix + Express running.
 
 ### Agent Dashboard
 

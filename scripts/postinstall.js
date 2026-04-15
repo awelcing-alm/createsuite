@@ -2,7 +2,7 @@
 
 /**
  * Post-install script for CreateSuite
- * Checks for OpenCode and oh-my-opencode installation
+ * Checks for OpenCode installation
  */
 
 const { execSync } = require('child_process');
@@ -22,31 +22,13 @@ function main() {
 
   // Check for OpenCode
   const hasOpencode = checkCommand('opencode');
-  
+
   if (hasOpencode) {
-    console.log(chalk.green('✓ OpenCode is installed'));
-    
-    // Check for oh-my-opencode
     try {
-      const fs = require('fs');
-      const path = require('path');
-      const os = require('os');
-      const opencodeConfig = path.join(os.homedir(), '.config', 'opencode', 'opencode.json');
-      
-      if (fs.existsSync(opencodeConfig)) {
-        const config = JSON.parse(fs.readFileSync(opencodeConfig, 'utf-8'));
-        if (config.plugin && config.plugin.includes('oh-my-opencode')) {
-          console.log(chalk.green('✓ oh-my-opencode is configured\n'));
-        } else {
-          console.log(chalk.yellow('⚠️  oh-my-opencode is not configured yet\n'));
-          showOhMyOpencodeSetup();
-        }
-      } else {
-        console.log(chalk.yellow('⚠️  OpenCode config not found\n'));
-        showOhMyOpencodeSetup();
-      }
-    } catch (error) {
-      console.log(chalk.yellow('⚠️  Could not check oh-my-opencode configuration\n'));
+      const version = execSync('opencode --version', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+      console.log(chalk.green(`✓ OpenCode is installed (${version})\n`));
+    } catch {
+      console.log(chalk.green('✓ OpenCode is installed\n'));
     }
   } else {
     console.log(chalk.yellow('⚠️  OpenCode is not installed\n'));
@@ -58,21 +40,14 @@ function main() {
   console.log(chalk.gray('  cs provider setup       - Configure AI providers'));
   console.log(chalk.gray('  cs agent create <name>  - Create an agent'));
   console.log(chalk.gray('  cs task create          - Create a task\n'));
-  
+
   console.log(chalk.gray('Documentation: https://github.com/awelcing-alm/createsuite\n'));
 }
 
 function showOpencodeInstructions() {
   console.log(chalk.bold('OpenCode Installation:'));
-  console.log(chalk.gray('  Visit: https://opencode.ai/docs'));
-  console.log(chalk.gray('  Follow the installation instructions for your platform\n'));
-}
-
-function showOhMyOpencodeSetup() {
-  console.log(chalk.bold('oh-my-opencode Setup:'));
-  console.log(chalk.gray('  Run: bunx oh-my-opencode install'));
-  console.log(chalk.gray('  Or:  npx oh-my-opencode install\n'));
-  console.log(chalk.gray('  This will configure advanced agent orchestration features\n'));
+  console.log(chalk.gray('  curl -fsSL https://opencode.ai/install | bash'));
+  console.log(chalk.gray('  For more info: https://opencode.ai/docs\n'));
 }
 
 // Run the script

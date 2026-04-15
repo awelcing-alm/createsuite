@@ -155,3 +155,16 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Playwright MCP runtime artifacts
+.playwright-mcp/
+
+# Test result artifacts
+test-results/
+agent-ui/test-results/
+
+# Evidence artifacts (generated)
+.createsuite/evidence/
+
+# Temporary design assets
+cacti-*.png

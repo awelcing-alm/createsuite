@@ -1,6 +1,6 @@
 /**
  * CreateSuite - Orchestrated swarm system for OpenCode agents
- * 
+ *
  * Main entry point for programmatic usage
  */
 

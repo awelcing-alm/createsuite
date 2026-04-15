@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as path from 'path';
 import { OAuthConfig } from './types';
@@ -37,7 +36,7 @@ export class OAuthManager {
     try {
       const data = await fsp.readFile(this.tokenPath, 'utf-8');
       const tokenData = JSON.parse(data);
-      
+
       // Check if token is expired (simple check)
       if (tokenData.expiresAt) {
         const expiresAt = new Date(tokenData.expiresAt);
@@ -77,7 +76,7 @@ export class OAuthManager {
   async storeToken(accessToken: string, expiresIn?: number): Promise<void> {
     const tokenData: TokenData = {
       accessToken,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     if (expiresIn) {
@@ -94,7 +93,7 @@ export class OAuthManager {
     }
 
     await fsp.writeFile(this.tokenPath, JSON.stringify(tokenData, null, 2), {
-      mode: 0o600 // Restrict permissions
+      mode: 0o600, // Restrict permissions
     });
   }
 
@@ -113,7 +112,7 @@ export class OAuthManager {
   /**
    * Initialize OAuth flow (placeholder)
    * In production, this would open browser for OAuth flow
-   * 
+   *
    * WARNING: This is a development placeholder. In production:
    * - Implement proper OAuth 2.0 flow with PKCE
    * - Use a secure callback server
@@ -128,7 +127,7 @@ export class OAuthManager {
     console.log('2. Handle callback with authorization code');
     console.log('3. Exchange code for access token');
     console.log('4. Store token securely');
-    
+
     // Development placeholder - DO NOT use in production
     // Store a marker token to indicate OAuth was initiated
     await this.storeToken('dev_placeholder_token', 3600);
@@ -141,7 +140,7 @@ export class OAuthManager {
   getOAuthConfig(): OAuthConfig {
     return {
       scopes: ['repo', 'workflow', 'read:org'],
-      clientId: process.env.OAUTH_CLIENT_ID
+      clientId: process.env.OAUTH_CLIENT_ID,
     };
   }
 }

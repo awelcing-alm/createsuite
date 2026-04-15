@@ -6,30 +6,29 @@ import ContentWindow from './components/ContentWindow';
 import type { GlobalMapAgent, GlobalMapMessage } from './components/GlobalMapWindow';
 import LifecycleNotification from './components/LifecycleNotification';
 import SetupWizard from './components/SetupWizard';
-import GaussianBackground from './components/GaussianBackground';
 import { usePhoenixChannel } from './hooks/usePhoenixChannel';
 import { macosTheme } from './theme/macos';
-import { 
-  Dock, 
-  DockItem, 
-  DockDivider, 
-  MenuBar, 
-  MenuBarItem, 
+import {
+  Dock,
+  DockItem,
+  DockDivider,
+  MenuBar,
+  MenuBarItem,
   MenuBarRight,
   Menu,
   MenuItem,
-  MenuDivider
+  MenuDivider,
 } from './components/ui/MacOS';
-import { 
-  Monitor, 
-  Terminal as TerminalIcon, 
-  Cpu, 
-  Globe, 
-  Play,
-  Wifi, 
-  Battery,
-  Search
-} from 'lucide-react';
+import {
+  MonitorIcon,
+  TerminalIcon,
+  CpuIcon,
+  GlobeIcon,
+  PlayIcon,
+  WifiIcon,
+  BatteryIcon,
+  SearchIcon,
+} from './components/ui/InlineIcon';
 
 // Lazy load heavy components for code splitting
 const AgentDashboard = lazy(() => import('./components/AgentDashboard'));
@@ -37,6 +36,7 @@ const TldrawWindow = lazy(() => import('./components/TldrawWindow'));
 const QuadBoardWindow = lazy(() => import('./components/QuadBoardWindow'));
 const GlobalMapWindow = lazy(() => import('./components/GlobalMapWindow'));
 const SystemMonitor = lazy(() => import('./components/SystemMonitor'));
+const GaussianBackground = lazy(() => import('./components/GaussianBackground'));
 
 // UI Command payload type
 export interface UiCommandPayload {
@@ -83,10 +83,9 @@ const Desktop = styled.div`
 
 const AppleLogo = () => (
   <svg width="14" height="17" viewBox="0 0 14 17" fill="currentColor">
-    <path d="M13.1 12.2c-.3.6-.6 1.2-1 1.7-.6.7-1.1 1.2-1.6 1.4-.6.3-1.3.5-2 .5-.5 0-1.1-.1-1.7-.4-.6-.3-1.1-.4-1.6-.4s-1 .1-1.6.4c-.6.3-1.1.4-1.5.4-.7 0-1.4-.2-2-.5-.6-.3-1.1-.8-1.6-1.5-.5-.7-.9-1.5-1.2-2.4C.1 10.5 0 9.5 0 8.5c0-1.1.2-2 .7-2.9.4-.7.9-1.2 1.5-1.6.6-.4 1.3-.6 2-.6.5 0 1.2.2 2 .5.8.3 1.3.5 1.5.5.2 0 .7-.2 1.7-.5.9-.3 1.6-.4 2.2-.3 1.6.1 2.8.8 3.6 1.9-1.4.9-2.1 2.1-2.1 3.6 0 1.2.4 2.2 1.3 3 .4.4.8.7 1.3.9-.1.3-.2.5-.6.2zm-3-11.4c0 .9-.3 1.8-1 2.6-.8.9-1.7 1.5-2.7 1.4 0-.1 0-.2 0-.3 0-.9.4-1.8 1-2.5.3-.4.7-.7 1.2-1 .5-.3 1-.4 1.4-.5 0 .1.1.2.1.3z"/>
+    <path d="M13.1 12.2c-.3.6-.6 1.2-1 1.7-.6.7-1.1 1.2-1.6 1.4-.6.3-1.3.5-2 .5-.5 0-1.1-.1-1.7-.4-.6-.3-1.1-.4-1.6-.4s-1 .1-1.6.4c-.6.3-1.1.4-1.5.4-.7 0-1.4-.2-2-.5-.6-.3-1.1-.8-1.6-1.5-.5-.7-.9-1.5-1.2-2.4C.1 10.5 0 9.5 0 8.5c0-1.1.2-2 .7-2.9.4-.7.9-1.2 1.5-1.6.6-.4 1.3-.6 2-.6.5 0 1.2.2 2 .5.8.3 1.3.5 1.5.5.2 0 .7-.2 1.7-.5.9-.3 1.6-.4 2.2-.3 1.6.1 2.8.8 3.6 1.9-1.4.9-2.1 2.1-2.1 3.6 0 1.2.4 2.2 1.3 3 .4.4.8.7 1.3.9-.1.3-.2.5-.6.2zm-3-11.4c0 .9-.3 1.8-1 2.6-.8.9-1.7 1.5-2.7 1.4 0-.1 0-.2 0-.3 0-.9.4-1.8 1-2.5.3-.4.7-.7 1.2-1 .5-.3 1-.4 1.4-.5 0 .1.1.2.1.3z" />
   </svg>
 );
-
 
 interface BaseWindow {
   id: string;
@@ -132,7 +131,15 @@ export interface QuadBoardState extends BaseWindow {
   type: 'quad-board';
 }
 
-type WindowState = TerminalState | ImageState | BrowserState | GlobalMapState | SystemMonitorState | AgentDashboardState | TldrawState | QuadBoardState;
+type WindowState =
+  | TerminalState
+  | ImageState
+  | BrowserState
+  | GlobalMapState
+  | SystemMonitorState
+  | AgentDashboardState
+  | TldrawState
+  | QuadBoardState;
 
 const isDemoRoute = () => {
   const path = window.location.pathname;
@@ -147,7 +154,7 @@ const App: React.FC = () => {
   const [globalAgents, setGlobalAgents] = useState<GlobalMapAgent[]>([]);
   const [globalMessages, setGlobalMessages] = useState<GlobalMapMessage[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
-  
+
   const [showWelcome, setShowWelcome] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('demo') === 'true' || params.get('skipWelcome') === 'true') return false;
@@ -162,10 +169,18 @@ const App: React.FC = () => {
   }, []);
 
   const spawnWindow = (
-    type: 'terminal' | 'image' | 'browser' | 'global-map' | 'system-monitor' | 'agent-dashboard' | 'tldraw' | 'quad-board',
+    type:
+      | 'terminal'
+      | 'image'
+      | 'browser'
+      | 'global-map'
+      | 'system-monitor'
+      | 'agent-dashboard'
+      | 'tldraw'
+      | 'quad-board',
     title: string,
     contentOrCommand?: string,
-    customPosition?: { x: number, y: number }
+    customPosition?: { x: number; y: number }
   ) => {
     const id = uuidv4();
 
@@ -181,7 +196,7 @@ const App: React.FC = () => {
         const offset = prev.length * 30;
         position = {
           x: 80 + (offset % 300),
-          y: 60 + (offset % 200)
+          y: 60 + (offset % 200),
         };
       }
 
@@ -208,7 +223,11 @@ const App: React.FC = () => {
     setActiveMenu(null);
   };
 
-  const spawnTerminal = (title: string = 'Terminal', command?: string, customPosition?: { x: number, y: number }) => {
+  const spawnTerminal = (
+    title: string = 'Terminal',
+    command?: string,
+    customPosition?: { x: number; y: number }
+  ) => {
     spawnWindow('terminal', title, command, customPosition);
   };
 
@@ -221,23 +240,27 @@ const App: React.FC = () => {
   };
 
   const minimizeWindow = (id: string) => {
-    setWindows(prev => prev.map(t => t.id === id ? { ...t, minimized: true, maximized: false } : t));
+    setWindows(prev =>
+      prev.map(t => (t.id === id ? { ...t, minimized: true, maximized: false } : t))
+    );
   };
 
   const maximizeWindow = (id: string) => {
-    setWindows(prev => prev.map(t => t.id === id ? { ...t, maximized: !t.maximized, minimized: false } : t));
+    setWindows(prev =>
+      prev.map(t => (t.id === id ? { ...t, maximized: !t.maximized, minimized: false } : t))
+    );
   };
 
   const restoreWindow = (id: string) => {
     const newZ = topZIndex + 1;
     setTopZIndex(newZ);
-    setWindows(prev => prev.map(t => t.id === id ? { ...t, minimized: false, zIndex: newZ } : t));
+    setWindows(prev => prev.map(t => (t.id === id ? { ...t, minimized: false, zIndex: newZ } : t)));
   };
 
   const focusWindow = (id: string) => {
     const newZ = topZIndex + 1;
     setTopZIndex(newZ);
-    setWindows(prev => prev.map(t => t.id === id ? { ...t, zIndex: newZ } : t));
+    setWindows(prev => prev.map(t => (t.id === id ? { ...t, zIndex: newZ } : t)));
   };
 
   const handleUiCommand = useCallback((payload: UiCommandPayload) => {
@@ -253,59 +276,104 @@ const App: React.FC = () => {
   const runConvoyTest = useCallback(() => {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    
-    spawnTerminal('Z.ai Agent (GLM 4.7)', 'export OPENCODE_PROVIDER=zai-coding-plan OPENCODE_MODEL=glm-4.7; echo "Starting Z.ai GLM 4.7 Agent..."; opencode', { x: 20, y: 60 });
-    setTimeout(() => spawnTerminal('Asset Generator (HF)', 'export OPENCODE_PROVIDER=huggingface OPENCODE_MODEL=stable-diffusion-3.5-large; echo "Starting Asset Generator..."; opencode', { x: w - 620, y: 60 }), 200);
-    setTimeout(() => spawnTerminal('Sisyphus (Claude)', 'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; echo "Starting Sisyphus..."; opencode', { x: 20, y: h - 520 }), 400);
-    setTimeout(() => spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle..."; opencode', { x: w - 620, y: h - 520 }), 600);
-    setTimeout(() => spawnTerminal('Architect (Kimi-K2.5)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=kimi-k2.5; echo "Starting Architect..."; opencode', { x: w / 2 - 310, y: h / 2 - 200 }), 800);
+
+    spawnTerminal(
+      'Z.ai Agent (GLM 4.7)',
+      'export OPENCODE_PROVIDER=zai-coding-plan OPENCODE_MODEL=glm-4.7; echo "Starting Z.ai GLM 4.7 Agent..."; opencode',
+      { x: 20, y: 60 }
+    );
+    setTimeout(
+      () =>
+        spawnTerminal(
+          'Asset Generator (HF)',
+          'export OPENCODE_PROVIDER=huggingface OPENCODE_MODEL=stable-diffusion-3.5-large; echo "Starting Asset Generator..."; opencode',
+          { x: w - 620, y: 60 }
+        ),
+      200
+    );
+    setTimeout(
+      () =>
+        spawnTerminal(
+          'Sisyphus (Claude)',
+          'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; echo "Starting Sisyphus..."; opencode',
+          { x: 20, y: h - 520 }
+        ),
+      400
+    );
+    setTimeout(
+      () =>
+        spawnTerminal(
+          'Oracle (OpenAI)',
+          'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle..."; opencode',
+          { x: w - 620, y: h - 520 }
+        ),
+      600
+    );
+    setTimeout(
+      () =>
+        spawnTerminal(
+          'Architect (Kimi-K2.5)',
+          'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=kimi-k2.5; echo "Starting Architect..."; opencode',
+          { x: w / 2 - 310, y: h / 2 - 200 }
+        ),
+      800
+    );
   }, []);
 
-  const handleWelcomeComplete = useCallback((config?: { providers: string[]; launchAgents: string[] }) => {
-    setShowWelcome(false);
-    const loading = document.getElementById('loading');
-    if (loading) loading.classList.add('hidden');
-    
-    if (config && config.launchAgents && config.launchAgents.length > 0) {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      let delay = 0;
-      
-      config.launchAgents.forEach((agentId, index) => {
-        setTimeout(() => {
-          const col = index % 2;
-          const row = Math.floor(index / 2);
-          const position = {
-            x: col === 0 ? 20 : w - 620,
-            y: row === 0 ? 60 : h - 520
-          };
-          
-          switch (agentId) {
-            case 'terminal':
-              spawnTerminal('Terminal', undefined, position);
-              break;
-            case 'claude':
-              spawnTerminal('Sisyphus (Claude)', 
-                'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; echo "Starting Sisyphus..."; opencode',
-                position);
-              break;
-            case 'openai':
-              spawnTerminal('Oracle (OpenAI)',
-                'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle..."; opencode',
-                position);
-              break;
-            case 'gemini':
-              spawnTerminal('Engineer (Gemini)',
-                'export OPENCODE_PROVIDER=google OPENCODE_MODEL=gemini-3-pro; echo "Starting Engineer..."; opencode',
-                position);
-              break;
-          }
-        }, delay);
-        delay += 200;
-      });
-    }
-  }, []);
-  
+  const handleWelcomeComplete = useCallback(
+    (config?: { providers: string[]; launchAgents: string[] }) => {
+      setShowWelcome(false);
+      const loading = document.getElementById('loading');
+      if (loading) loading.classList.add('hidden');
+
+      if (config && config.launchAgents && config.launchAgents.length > 0) {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        let delay = 0;
+
+        config.launchAgents.forEach((agentId, index) => {
+          setTimeout(() => {
+            const col = index % 2;
+            const row = Math.floor(index / 2);
+            const position = {
+              x: col === 0 ? 20 : w - 620,
+              y: row === 0 ? 60 : h - 520,
+            };
+
+            switch (agentId) {
+              case 'terminal':
+                spawnTerminal('Terminal', undefined, position);
+                break;
+              case 'claude':
+                spawnTerminal(
+                  'Sisyphus (Claude)',
+                  'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; echo "Starting Sisyphus..."; opencode',
+                  position
+                );
+                break;
+              case 'openai':
+                spawnTerminal(
+                  'Oracle (OpenAI)',
+                  'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; echo "Starting Oracle..."; opencode',
+                  position
+                );
+                break;
+              case 'gemini':
+                spawnTerminal(
+                  'Engineer (Gemini)',
+                  'export OPENCODE_PROVIDER=google OPENCODE_MODEL=gemini-3-pro; echo "Starting Engineer..."; opencode',
+                  position
+                );
+                break;
+            }
+          }, delay);
+          delay += 200;
+        });
+      }
+    },
+    []
+  );
+
   const handleSetupSkip = useCallback(() => {
     setShowWelcome(false);
     const loading = document.getElementById('loading');
@@ -323,7 +391,7 @@ const App: React.FC = () => {
         setActiveMenu(null);
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
@@ -334,26 +402,52 @@ const App: React.FC = () => {
     if (params.get('demo') === 'true' || isDemoRoute()) {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      
-      spawnTerminal('Z.ai Agent', 
+
+      spawnTerminal(
+        'Z.ai Agent',
         'echo "╔══════════════════════════════════════════════════╗"; echo "║  Z.ai Agent - GLM 4.7 Coding Specialist         ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Connected to oh-my-opencode provider"; echo "✓ Model: glm-4.7 (coding-optimized)"; echo "✓ Status: Processing task queue"',
-        { x: 20, y: 60 });
-      
-      setTimeout(() => spawnTerminal('Asset Generator',
-        'echo "╔══════════════════════════════════════════════════╗"; echo "║  Hugging Face Asset Generator                   ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Provider: huggingface-inference"; echo "✓ Model: stable-diffusion-3.5-large"; echo "✓ Status: Generating assets"',
-        { x: w - 620, y: 60 }), 200);
-      
-      setTimeout(() => spawnTerminal('Sisyphus (Claude)',
-        'echo "╔══════════════════════════════════════════════════╗"; echo "║  Sisyphus - Task Automation Agent              ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Provider: anthropic"; echo "✓ Model: claude-opus-4.5"; echo "✓ Status: Executing plan"',
-        { x: 20, y: h - 520 }), 400);
-      
-      setTimeout(() => spawnTerminal('Oracle (OpenAI)',
-        'echo "╔══════════════════════════════════════════════════╗"; echo "║  Oracle - System Architecture Advisor           ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Provider: openai"; echo "✓ Model: gpt-5.2"; echo "✓ Status: Analyzing codebase"',
-        { x: w - 620, y: h - 520 }), 600);
-      
-      setTimeout(() => spawnTerminal('Architect',
-        'echo "╔══════════════════════════════════════════════════╗"; echo "║  Architect - Deep System Design Specialist     ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Provider: openai"; echo "✓ Model: kimi-k2.5"; echo "✓ Status: Designing Phase 2"',
-        { x: w / 2 - 310, y: h / 2 - 200 }), 800);
+        { x: 20, y: 60 }
+      );
+
+      setTimeout(
+        () =>
+          spawnTerminal(
+            'Asset Generator',
+            'echo "╔══════════════════════════════════════════════════╗"; echo "║  Hugging Face Asset Generator                   ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Provider: huggingface-inference"; echo "✓ Model: stable-diffusion-3.5-large"; echo "✓ Status: Generating assets"',
+            { x: w - 620, y: 60 }
+          ),
+        200
+      );
+
+      setTimeout(
+        () =>
+          spawnTerminal(
+            'Sisyphus (Claude)',
+            'echo "╔══════════════════════════════════════════════════╗"; echo "║  Sisyphus - Task Automation Agent              ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Provider: anthropic"; echo "✓ Model: claude-opus-4.5"; echo "✓ Status: Executing plan"',
+            { x: 20, y: h - 520 }
+          ),
+        400
+      );
+
+      setTimeout(
+        () =>
+          spawnTerminal(
+            'Oracle (OpenAI)',
+            'echo "╔══════════════════════════════════════════════════╗"; echo "║  Oracle - System Architecture Advisor           ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Provider: openai"; echo "✓ Model: gpt-5.2"; echo "✓ Status: Analyzing codebase"',
+            { x: w - 620, y: h - 520 }
+          ),
+        600
+      );
+
+      setTimeout(
+        () =>
+          spawnTerminal(
+            'Architect',
+            'echo "╔══════════════════════════════════════════════════╗"; echo "║  Architect - Deep System Design Specialist     ║"; echo "╚══════════════════════════════════════════════════╝"; echo ""; echo "✓ Provider: openai"; echo "✓ Model: kimi-k2.5"; echo "✓ Status: Designing Phase 2"',
+            { x: w / 2 - 310, y: h / 2 - 200 }
+          ),
+        800
+      );
     }
   }, []);
 
@@ -363,10 +457,14 @@ const App: React.FC = () => {
 
     const mapStatus = (status: string): GlobalMapAgent['status'] => {
       switch (status) {
-        case 'working': return 'working';
-        case 'error': return 'error';
-        case 'offline': return 'offline';
-        default: return 'idle';
+        case 'working':
+          return 'working';
+        case 'error':
+          return 'error';
+        case 'offline':
+          return 'offline';
+        default:
+          return 'idle';
       }
     };
 
@@ -374,7 +472,7 @@ const App: React.FC = () => {
       try {
         const [agentsRes, mailboxRes] = await Promise.all([
           fetch('/api/agents'),
-          fetch('/api/mailbox')
+          fetch('/api/mailbox'),
         ]);
 
         if (!agentsRes.ok || !mailboxRes.ok) return;
@@ -384,29 +482,45 @@ const App: React.FC = () => {
 
         if (!isMounted) return;
 
-        const agents = (agentsPayload.data || []).map((agent: { id: string; name: string; status: string; capabilities?: string[] }, index: number) => ({
-          id: agent.id,
-          name: agent.name,
-          status: mapStatus(agent.status),
-          skills: agent.capabilities || [],
-          position: {
-            x: 160 + (index % 3) * 200,
-            y: 140 + Math.floor(index / 3) * 160
-          }
-        }));
+        const agents = (agentsPayload.data || []).map(
+          (
+            agent: { id: string; name: string; status: string; capabilities?: string[] },
+            index: number
+          ) => ({
+            id: agent.id,
+            name: agent.name,
+            status: mapStatus(agent.status),
+            skills: agent.capabilities || [],
+            position: {
+              x: 160 + (index % 3) * 200,
+              y: 140 + Math.floor(index / 3) * 160,
+            },
+          })
+        );
 
-        const messages = (mailboxPayload.data || []).map((message: { id: string; from: string; to: string; kind?: string; subject: string; body: string; timestamp: string; read: boolean }) => ({
-          id: message.id,
-          from: message.from,
-          to: message.to,
-          kind: message.kind || 'system',
-          subject: message.subject,
-          body: message.body,
-          timestamp: message.timestamp,
-          snippet: message.subject || message.body?.slice(0, 48) || '',
-          status: message.read ? 'sent' : 'queued',
-          createdAt: message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : ''
-        }));
+        const messages = (mailboxPayload.data || []).map(
+          (message: {
+            id: string;
+            from: string;
+            to: string;
+            kind?: string;
+            subject: string;
+            body: string;
+            timestamp: string;
+            read: boolean;
+          }) => ({
+            id: message.id,
+            from: message.from,
+            to: message.to,
+            kind: message.kind || 'system',
+            subject: message.subject,
+            body: message.body,
+            timestamp: message.timestamp,
+            snippet: message.subject || message.body?.slice(0, 48) || '',
+            status: message.read ? 'sent' : 'queued',
+            createdAt: message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : '',
+          })
+        );
 
         setGlobalAgents(agents);
         setGlobalMessages(messages);
@@ -425,26 +539,28 @@ const App: React.FC = () => {
   }, []);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
       minute: '2-digit',
-      hour12: true 
+      hour12: true,
     });
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
     });
   };
 
   return (
     <>
       <GlobalStyles />
-      <GaussianBackground visualState={phoenixVisualState} />
-      
+      <Suspense fallback={null}>
+        <GaussianBackground visualState={phoenixVisualState} />
+      </Suspense>
+
       {/* macOS Menu Bar */}
       <MenuBar>
         <MenuBarItem $bold onClick={() => setActiveMenu(activeMenu === 'apple' ? null : 'apple')}>
@@ -464,11 +580,11 @@ const App: React.FC = () => {
           Window
         </MenuBarItem>
         <MenuBarItem>Help</MenuBarItem>
-        
+
         <MenuBarRight>
-          <Wifi size={16} />
-          <Battery size={16} />
-          <Search size={16} />
+          <WifiIcon size={16} />
+          <BatteryIcon size={16} />
+          <SearchIcon size={16} />
           <span>{formatDate(currentTime)}</span>
           <span style={{ fontWeight: 500 }}>{formatTime(currentTime)}</span>
         </MenuBarRight>
@@ -477,52 +593,119 @@ const App: React.FC = () => {
       {/* Dropdown Menus */}
       {activeMenu === 'file' && (
         <Menu style={{ position: 'fixed', top: 28, left: 140, zIndex: 100000 }}>
-          <MenuItem onClick={() => { spawnTerminal(); setActiveMenu(null); }}>
+          <MenuItem
+            onClick={() => {
+              spawnTerminal();
+              setActiveMenu(null);
+            }}
+          >
             <TerminalIcon size={16} /> New Terminal
           </MenuItem>
           <MenuDivider />
-          <MenuItem onClick={() => { spawnWindow('system-monitor', 'Activity Monitor'); setActiveMenu(null); }}>
-            <Monitor size={16} /> Activity Monitor
+          <MenuItem
+            onClick={() => {
+              spawnWindow('system-monitor', 'Activity Monitor');
+              setActiveMenu(null);
+            }}
+          >
+            <MonitorIcon size={16} /> Activity Monitor
           </MenuItem>
         </Menu>
       )}
 
       {activeMenu === 'agents' && (
         <Menu style={{ position: 'fixed', top: 28, left: 180, zIndex: 100000 }}>
-          <MenuItem onClick={() => { spawnWindow('agent-dashboard', '🤖 Agent Dashboard'); setActiveMenu(null); }}>
-            <Cpu size={16} /> Agent Dashboard
+          <MenuItem
+            onClick={() => {
+              spawnWindow('agent-dashboard', '🤖 Agent Dashboard');
+              setActiveMenu(null);
+            }}
+          >
+            <CpuIcon size={16} /> Agent Dashboard
           </MenuItem>
           <MenuDivider />
-          <MenuItem onClick={() => { spawnTerminal('Sisyphus (Claude)', 'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; opencode'); setActiveMenu(null); }}>
-            <Cpu size={16} /> Sisyphus (Claude)
+          <MenuItem
+            onClick={() => {
+              spawnTerminal(
+                'Sisyphus (Claude)',
+                'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; opencode'
+              );
+              setActiveMenu(null);
+            }}
+          >
+            <CpuIcon size={16} /> Sisyphus (Claude)
           </MenuItem>
-          <MenuItem onClick={() => { spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; opencode'); setActiveMenu(null); }}>
-            <Cpu size={16} /> Oracle (OpenAI)
+          <MenuItem
+            onClick={() => {
+              spawnTerminal(
+                'Oracle (OpenAI)',
+                'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; opencode'
+              );
+              setActiveMenu(null);
+            }}
+          >
+            <CpuIcon size={16} /> Oracle (OpenAI)
           </MenuItem>
-          <MenuItem onClick={() => { spawnTerminal('Engineer (Gemini)', 'export OPENCODE_PROVIDER=google OPENCODE_MODEL=gemini-3-pro; opencode'); setActiveMenu(null); }}>
-            <Cpu size={16} /> Engineer (Gemini)
+          <MenuItem
+            onClick={() => {
+              spawnTerminal(
+                'Engineer (Gemini)',
+                'export OPENCODE_PROVIDER=google OPENCODE_MODEL=gemini-3-pro; opencode'
+              );
+              setActiveMenu(null);
+            }}
+          >
+            <CpuIcon size={16} /> Engineer (Gemini)
           </MenuItem>
-          <MenuItem onClick={() => { spawnTerminal('Architect (Kimi)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=kimi-k2.5; opencode'); setActiveMenu(null); }}>
-            <Cpu size={16} /> Architect (Kimi)
+          <MenuItem
+            onClick={() => {
+              spawnTerminal(
+                'Architect (Kimi)',
+                'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=kimi-k2.5; opencode'
+              );
+              setActiveMenu(null);
+            }}
+          >
+            <CpuIcon size={16} /> Architect (Kimi)
           </MenuItem>
           <MenuDivider />
-          <MenuItem onClick={() => { spawnGlobalMap(); setActiveMenu(null); }}>
-            <Globe size={16} /> Agent Village
+          <MenuItem
+            onClick={() => {
+              spawnGlobalMap();
+              setActiveMenu(null);
+            }}
+          >
+            <GlobeIcon size={16} /> Agent Village
           </MenuItem>
           <MenuDivider />
-          <MenuItem onClick={() => { runConvoyTest(); setActiveMenu(null); }}>
-            <Play size={16} /> Launch All Agents
+          <MenuItem
+            onClick={() => {
+              runConvoyTest();
+              setActiveMenu(null);
+            }}
+          >
+            <PlayIcon size={16} /> Launch All Agents
           </MenuItem>
         </Menu>
       )}
 
       {activeMenu === 'view' && (
         <Menu style={{ position: 'fixed', top: 28, left: 240, zIndex: 100000 }}>
-          <MenuItem onClick={() => { spawnGlobalMap(); setActiveMenu(null); }}>
-            <Globe size={16} /> Agent Village
+          <MenuItem
+            onClick={() => {
+              spawnGlobalMap();
+              setActiveMenu(null);
+            }}
+          >
+            <GlobeIcon size={16} /> Agent Village
           </MenuItem>
-          <MenuItem onClick={() => { spawnWindow('system-monitor', 'Activity Monitor'); setActiveMenu(null); }}>
-            <Monitor size={16} /> Activity Monitor
+          <MenuItem
+            onClick={() => {
+              spawnWindow('system-monitor', 'Activity Monitor');
+              setActiveMenu(null);
+            }}
+          >
+            <MonitorIcon size={16} /> Activity Monitor
           </MenuItem>
         </Menu>
       )}
@@ -533,7 +716,13 @@ const App: React.FC = () => {
           <MenuItem disabled={windows.length === 0}>Zoom</MenuItem>
           <MenuDivider />
           {windows.map(win => (
-            <MenuItem key={win.id} onClick={() => { focusWindow(win.id); setActiveMenu(null); }}>
+            <MenuItem
+              key={win.id}
+              onClick={() => {
+                focusWindow(win.id);
+                setActiveMenu(null);
+              }}
+            >
               {win.title}
             </MenuItem>
           ))}
@@ -543,27 +732,22 @@ const App: React.FC = () => {
 
       {/* Click to close menus */}
       {activeMenu && (
-        <div 
-          style={{ position: 'fixed', inset: 0, zIndex: 99998 }} 
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 99998 }}
           onClick={() => setActiveMenu(null)}
         />
       )}
 
       <Desktop>
         {/* Setup Wizard */}
-        {showWelcome && (
-          <SetupWizard 
-            onComplete={handleWelcomeComplete}
-            onSkip={handleSetupSkip}
-          />
-        )}
-        
+        {showWelcome && <SetupWizard onComplete={handleWelcomeComplete} onSkip={handleSetupSkip} />}
+
         {/* Lifecycle Notification */}
-        <LifecycleNotification 
+        <LifecycleNotification
           onKeepWorking={() => console.log('Keep working')}
           onViewResults={() => console.log('View results')}
         />
-        
+
         {/* Windows */}
         {windows.map(win => {
           if (win.type === 'terminal') {
@@ -727,150 +911,192 @@ const App: React.FC = () => {
 
       {/* macOS Dock */}
       <Dock>
-        <DockItem 
-          title="Finder"
-          onClick={() => {}}
-        >
+        <DockItem title="Finder" onClick={() => {}}>
           <svg viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="7" fill="url(#finder)"/>
-            <path d="M10 24c-2 0-3-1-3-3V11c0-2 1-3 3-3h12c2 0 3 1 3 3v10c0 2-1 3-3 3H10z" fill="#39C"/>
-            <path d="M10 8h12c2 0 3 1 3 3v2H7v-2c0-2 1-3 3-3z" fill="#6CF"/>
-            <circle cx="11" cy="18" r="2" fill="#FFF"/>
-            <circle cx="21" cy="18" r="2" fill="#FFF"/>
+            <rect width="32" height="32" rx="7" fill="url(#finder)" />
+            <path
+              d="M10 24c-2 0-3-1-3-3V11c0-2 1-3 3-3h12c2 0 3 1 3 3v10c0 2-1 3-3 3H10z"
+              fill="#39C"
+            />
+            <path d="M10 8h12c2 0 3 1 3 3v2H7v-2c0-2 1-3 3-3z" fill="#6CF" />
+            <circle cx="11" cy="18" r="2" fill="#FFF" />
+            <circle cx="21" cy="18" r="2" fill="#FFF" />
             <defs>
               <linearGradient id="finder" x1="0" y1="0" x2="32" y2="32">
-                <stop stopColor="#70D6FF"/>
-                <stop offset="1" stopColor="#0096FF"/>
+                <stop stopColor="#70D6FF" />
+                <stop offset="1" stopColor="#0096FF" />
               </linearGradient>
             </defs>
           </svg>
         </DockItem>
-        
-        <DockItem 
+
+        <DockItem
           $active={windows.some(w => w.type === 'terminal')}
           title="Terminal"
           onClick={() => spawnTerminal()}
         >
           <svg viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="7" fill="#1E1E1E"/>
-            <path d="M8 10l5 5-5 5" stroke="#FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M14 20h10" stroke="#FFF" strokeWidth="2" strokeLinecap="round"/>
+            <rect width="32" height="32" rx="7" fill="#1E1E1E" />
+            <path
+              d="M8 10l5 5-5 5"
+              stroke="#FFF"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path d="M14 20h10" stroke="#FFF" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </DockItem>
-        
-        <DockItem 
+
+        <DockItem
           title="Sisyphus"
-          onClick={() => spawnTerminal('Sisyphus (Claude)', 'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; opencode')}
+          onClick={() =>
+            spawnTerminal(
+              'Sisyphus (Claude)',
+              'export OPENCODE_PROVIDER=anthropic OPENCODE_MODEL=claude-opus-4.5; opencode'
+            )
+          }
         >
           <svg viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="7" fill="#7c3aed"/>
-            <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">S</text>
+            <rect width="32" height="32" rx="7" fill="#7c3aed" />
+            <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">
+              S
+            </text>
           </svg>
         </DockItem>
-        
-        <DockItem 
+
+        <DockItem
           title="Oracle"
-          onClick={() => spawnTerminal('Oracle (OpenAI)', 'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; opencode')}
+          onClick={() =>
+            spawnTerminal(
+              'Oracle (OpenAI)',
+              'export OPENCODE_PROVIDER=openai OPENCODE_MODEL=gpt-5.2; opencode'
+            )
+          }
         >
           <svg viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="7" fill="#10a37f"/>
-            <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">O</text>
+            <rect width="32" height="32" rx="7" fill="#10a37f" />
+            <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">
+              O
+            </text>
           </svg>
         </DockItem>
-        
-        <DockItem 
+
+        <DockItem
           title="Engineer"
-          onClick={() => spawnTerminal('Engineer (Gemini)', 'export OPENCODE_PROVIDER=google OPENCODE_MODEL=gemini-3-pro; opencode')}
+          onClick={() =>
+            spawnTerminal(
+              'Engineer (Gemini)',
+              'export OPENCODE_PROVIDER=google OPENCODE_MODEL=gemini-3-pro; opencode'
+            )
+          }
         >
           <svg viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="7" fill="#4285f4"/>
-            <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">E</text>
+            <rect width="32" height="32" rx="7" fill="#4285f4" />
+            <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">
+              E
+            </text>
           </svg>
         </DockItem>
-        
+
         <DockDivider />
-        
-        {windows.filter(w => w.minimized).map(win => (
-          <DockItem 
-            key={win.id}
-            title={win.title}
-            onClick={() => restoreWindow(win.id)}
-          >
-            <svg viewBox="0 0 32 32">
-              <rect width="32" height="32" rx="7" fill="#666"/>
-              <text x="16" y="20" textAnchor="middle" fill="white" fontSize="12">{win.title.charAt(0)}</text>
-            </svg>
-          </DockItem>
-        ))}
+
+        {windows
+          .filter(w => w.minimized)
+          .map(win => (
+            <DockItem key={win.id} title={win.title} onClick={() => restoreWindow(win.id)}>
+              <svg viewBox="0 0 32 32">
+                <rect width="32" height="32" rx="7" fill="#666" />
+                <text x="16" y="20" textAnchor="middle" fill="white" fontSize="12">
+                  {win.title.charAt(0)}
+                </text>
+              </svg>
+            </DockItem>
+          ))}
 
         {windows.filter(w => w.minimized).length > 0 && <DockDivider />}
-        
-        <DockItem 
+
+        <DockItem
           $active={windows.some(w => w.type === 'global-map')}
           title="Agent Village"
           onClick={spawnGlobalMap}
         >
           <svg viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="7" fill="url(#globe)"/>
-            <circle cx="16" cy="16" r="10" stroke="white" strokeWidth="1.5" fill="none"/>
-            <ellipse cx="16" cy="16" rx="4" ry="10" stroke="white" strokeWidth="1.5" fill="none"/>
-            <path d="M6 16h20M16 6v20" stroke="white" strokeWidth="1.5"/>
+            <rect width="32" height="32" rx="7" fill="url(#globe)" />
+            <circle cx="16" cy="16" r="10" stroke="white" strokeWidth="1.5" fill="none" />
+            <ellipse cx="16" cy="16" rx="4" ry="10" stroke="white" strokeWidth="1.5" fill="none" />
+            <path d="M6 16h20M16 6v20" stroke="white" strokeWidth="1.5" />
             <defs>
               <linearGradient id="globe" x1="0" y1="0" x2="32" y2="32">
-                <stop stopColor="#FF6B6B"/>
-                <stop offset="1" stopColor="#4ECDC4"/>
+                <stop stopColor="#FF6B6B" />
+                <stop offset="1" stopColor="#4ECDC4" />
               </linearGradient>
             </defs>
           </svg>
         </DockItem>
-        
-        <DockItem 
+
+        <DockItem
           $active={windows.some(w => w.type === 'system-monitor')}
           title="Activity Monitor"
           onClick={() => spawnWindow('system-monitor', 'Activity Monitor')}
         >
           <svg viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="7" fill="#333"/>
-            <path d="M6 20l5-8 4 5 6-10 5 13" stroke="#00FF00" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            <rect width="32" height="32" rx="7" fill="#333" />
+            <path
+              d="M6 20l5-8 4 5 6-10 5 13"
+              stroke="#00FF00"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </DockItem>
 
-        <DockItem 
+        <DockItem
           $active={windows.some(w => w.type === 'tldraw')}
           title="Draw"
           onClick={() => spawnWindow('tldraw', 'Drawing Canvas')}
         >
           <svg viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="7" fill="#f59e0b"/>
-            <path d="M8 24l4-16 4 4-2 8 6-6 2 10-14-2 4 2-4-2z" fill="white"/>
-            <circle cx="24" cy="8" r="4" fill="white"/>
+            <rect width="32" height="32" rx="7" fill="#f59e0b" />
+            <path d="M8 24l4-16 4 4-2 8 6-6 2 10-14-2 4 2-4-2z" fill="white" />
+            <circle cx="24" cy="8" r="4" fill="white" />
           </svg>
         </DockItem>
 
-        <DockItem 
+        <DockItem
           $active={windows.some(w => w.type === 'quad-board')}
           title="Quad Board"
           onClick={() => spawnWindow('quad-board', 'Quad Collaborative Board')}
         >
           <svg viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="7" fill="#8b5cf6"/>
-            <rect x="3" y="3" width="12" height="12" rx="2" fill="white" opacity="0.8"/>
-            <rect x="17" y="3" width="12" height="12" rx="2" fill="white" opacity="0.8"/>
-            <rect x="3" y="17" width="12" height="12" rx="2" fill="white" opacity="0.8"/>
-            <rect x="17" y="17" width="12" height="12" rx="2" fill="white" opacity="0.8"/>
+            <rect width="32" height="32" rx="7" fill="#8b5cf6" />
+            <rect x="3" y="3" width="12" height="12" rx="2" fill="white" opacity="0.8" />
+            <rect x="17" y="3" width="12" height="12" rx="2" fill="white" opacity="0.8" />
+            <rect x="3" y="17" width="12" height="12" rx="2" fill="white" opacity="0.8" />
+            <rect x="17" y="17" width="12" height="12" rx="2" fill="white" opacity="0.8" />
           </svg>
         </DockItem>
-        
+
         <DockDivider />
-        
-        <DockItem 
+
+        <DockItem
           title="Settings"
-          onClick={() => { localStorage.removeItem('createsuite-setup-complete'); setShowWelcome(true); }}
+          onClick={() => {
+            localStorage.removeItem('createsuite-setup-complete');
+            setShowWelcome(true);
+          }}
         >
           <svg viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="7" fill="#636366"/>
-            <circle cx="16" cy="16" r="6" stroke="white" strokeWidth="2" fill="none"/>
-            <path d="M16 6v4M16 22v4M6 16h4M22 16h4M9 9l3 3M20 20l3 3M9 23l3-3M20 12l3-3" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <rect width="32" height="32" rx="7" fill="#636366" />
+            <circle cx="16" cy="16" r="6" stroke="white" strokeWidth="2" fill="none" />
+            <path
+              d="M16 6v4M16 22v4M6 16h4M22 16h4M9 9l3 3M20 20l3 3M9 23l3-3M20 12l3-3"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
         </DockItem>
       </Dock>
