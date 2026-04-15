@@ -59,6 +59,13 @@ else
   echo "⏭️  agent-ui server node_modules up to date"
 fi
 
+if [ -f "remotion/package.json" ] && needs_npm_ci remotion/package.json remotion/package-lock.json remotion/node_modules; then
+  echo "📦 Installing remotion dependencies..."
+  (cd remotion && npm install)
+else
+  echo "⏭️  Remotion dependencies up to date"
+fi
+
 # --- Build ---
 echo "🔨 Building project..."
 npm run build

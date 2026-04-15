@@ -1,0 +1,14 @@
+{
+  "name": "@createsuite/remotion",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "preview": "remotion preview src/index.ts",
+    "render": "remotion render src/index.ts CreateSuiteTour ../public/tour.mp4",
+    "render:agent-ui": "remotion render src/index.ts AgentUITour ../public/agent-ui-tour.mp4"
+  },
+  "dependencies": {
+    "remotion": "^4.0.410",
+    "@remotion/cli": "^4.0.410"
+  }
+}
