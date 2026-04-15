@@ -1,14 +1,4 @@
 import { createRoot } from 'react-dom/client';
+import App from './App';
 
-async function bootstrap() {
-  const path = window.location.pathname;
-  const module = path === '/background-lab' || path === '/background-lab/'
-    ? await import('./BackgroundEvaluationApp.tsx')
-    : await import('./App.tsx');
-
-  const RootComponent = module.default;
-
-  createRoot(document.getElementById('root')!).render(<RootComponent />);
-}
-
-bootstrap();
+createRoot(document.getElementById('root')!).render(<App />);

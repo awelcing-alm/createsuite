@@ -13,8 +13,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.6.0",
     "@tldraw/sync": "^4.5.3",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
@@ -25,7 +23,6 @@
     "react95": "^4.0.0",
     "socket.io-client": "^4.8.3",
     "styled-components": "^6.3.8",
-    "three": "^0.183.2",
     "tldraw": "^4.5.3",
     "uuid": "^13.0.0"
   },
@@ -38,7 +35,6 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@types/styled-components": "^5.1.36",
-    "@types/three": "^0.182.0",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^5.1.1",
     "@vitest/coverage-v8": "^4.1.4",

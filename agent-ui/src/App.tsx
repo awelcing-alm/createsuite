@@ -6,7 +6,6 @@ import ContentWindow from './components/ContentWindow';
 import type { GlobalMapAgent, GlobalMapMessage } from './components/GlobalMapWindow';
 import LifecycleNotification from './components/LifecycleNotification';
 import SetupWizard from './components/SetupWizard';
-import { usePhoenixChannel } from './hooks/usePhoenixChannel';
 import { macosTheme } from './theme/macos';
 import {
   Dock,
@@ -36,7 +35,6 @@ const TldrawWindow = lazy(() => import('./components/TldrawWindow'));
 const QuadBoardWindow = lazy(() => import('./components/QuadBoardWindow'));
 const GlobalMapWindow = lazy(() => import('./components/GlobalMapWindow'));
 const SystemMonitor = lazy(() => import('./components/SystemMonitor'));
-const GaussianBackground = lazy(() => import('./components/GaussianBackground'));
 
 // UI Command payload type
 export interface UiCommandPayload {
@@ -147,7 +145,6 @@ const isDemoRoute = () => {
 };
 
 const App: React.FC = () => {
-  const phoenixVisualState = usePhoenixChannel();
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [topZIndex, setTopZIndex] = useState(1);
@@ -557,9 +554,6 @@ const App: React.FC = () => {
   return (
     <>
       <GlobalStyles />
-      <Suspense fallback={null}>
-        <GaussianBackground visualState={phoenixVisualState} />
-      </Suspense>
 
       {/* macOS Menu Bar */}
       <MenuBar>
