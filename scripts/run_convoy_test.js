@@ -1,4 +1,4 @@
-const puppeteer = require('puppeteer');
+const { chromium } = require('@playwright/test');
 const { spawn } = require('child_process');
 const path = require('path');
 
@@ -7,7 +7,7 @@ async function runTest() {
 
   const serverPath = path.join(__dirname, '../agent-ui/server/index.js');
   const serverProcess = spawn('node', [serverPath], {
-    stdio: ['ignore', 'pipe', 'pipe'], 
+    stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env, PORT: '3001' }
   });
 
@@ -19,20 +19,16 @@ async function runTest() {
 
   let browser;
   try {
-    browser = await puppeteer.launch({
-      headless: true, 
-      args: ['--no-sandbox', '--disable-setuid-sandbox'] 
-    });
-
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 800 });
+    browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const page = await context.newPage();
 
     page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
-    page.on('pageerror', err => console.error('BROWSER ERROR:', err));
+    page.on('pageerror', err => console.error('BROWSER ERROR:', err.message));
     page.on('requestfailed', req => console.error(`REQ FAILED: ${req.url()} - ${req.failure().errorText}`));
 
     console.log('Navigating to http://localhost:3001...');
-    await page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+    await page.goto('http://localhost:3001', { waitUntil: 'networkidle' });
 
     console.log('Clicking Start...');
     await page.evaluate(() => {
@@ -50,18 +46,16 @@ async function runTest() {
       const testItem = items.find(i => i.innerText.includes('Convoy Delivery Test'));
       if (testItem) testItem.click();
       else {
-        // Try fallback
-         const all = Array.from(document.querySelectorAll('*'));
-         const el = all.find(e => e.innerText && e.innerText.includes('Convoy Delivery Test') && e.tagName !== 'SCRIPT');
-         if (el) el.click();
-         else throw new Error('Convoy Delivery Test item not found');
+        const all = Array.from(document.querySelectorAll('*'));
+        const el = all.find(e => e.innerText && e.innerText.includes('Convoy Delivery Test') && e.tagName !== 'SCRIPT');
+        if (el) el.click();
+        else throw new Error('Convoy Delivery Test item not found');
       }
     });
 
     console.log('Waiting for terminals...');
     await new Promise(resolve => setTimeout(resolve, 4000));
 
-    // Verify
     const titles = [
       'Z.ai Agent (GLM 4.7)',
       'Asset Generator (HF)',
@@ -89,7 +83,6 @@ async function runTest() {
     }
 
     console.log('🎉 Test Completed Successfully!');
-
   } catch (error) {
     console.error('❌ Test Failed:', error);
     process.exitCode = 1;
