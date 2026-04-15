@@ -74,10 +74,10 @@ web_modules/
 !.env.example
 
 # CreateSuite specific
-.createsuite/oauth-token.json
-.createsuite/providers.json
-.createsuite/*-credentials.json
-.createsuite/*.tmp
+**/.createsuite/oauth-token.json
+**/.createsuite/providers.json
+**/.createsuite/*-credentials.json
+**/.createsuite/*.tmp
 .sisyphus/  # Symlinks to .createsuite (unified storage)
 
 # Remotion
