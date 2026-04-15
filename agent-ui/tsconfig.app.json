@@ -9,7 +9,7 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
-    "types": ["vite/client", "jest", "@webgpu/types"],
+    "types": ["vite/client", "@webgpu/types"],
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
