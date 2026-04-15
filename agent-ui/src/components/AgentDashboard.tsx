@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import Draggable from 'react-draggable';
 import { macosTheme } from '../theme/macos';
-import { 
-  Square, 
+import {
+  Square,
   RefreshCw,
-  Cpu,
+  CpuIcon,
   Activity,
   Zap,
   Check,
-  AlertCircle
-} from 'lucide-react';
+  AlertCircle,
+} from '../ui/InlineIcon';
 
 // ==================== TYPES ====================
 
@@ -490,7 +490,7 @@ const AgentDashboard: React.FC<AgentDashboardProps> = ({
 
             <Section>
               <SectionTitle>
-                <Cpu size={16} />
+                <CpuIcon size={16} />
                 Available Agent Types
               </SectionTitle>
               

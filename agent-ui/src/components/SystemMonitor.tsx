@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import Draggable from 'react-draggable';
 import { macosTheme } from '../theme/macos';
-import { X, Minus, Maximize2, Activity, Cpu, Wifi, HardDrive } from 'lucide-react';
+import { XIcon, MinusIcon, Maximize2Icon, Activity, CpuIcon, WifiIcon, HardDrive } from '../ui/InlineIcon';
 import SkillsCharacters from './SkillsCharacters';
 import ApiMonitoring from './ApiMonitoring';
 
@@ -298,13 +298,13 @@ const SystemMonitor: React.FC<SystemMonitorProps> = ({
                 $active={isActive}
                 onClick={(e) => { e.stopPropagation(); onClose(id); }}
               >
-                <X size={8} strokeWidth={2.5} />
+                <XIcon size={8} strokeWidth={2.5} />
               </TrafficLight>
               <TrafficLight $color="minimize" $active={isActive}>
-                <Minus size={8} strokeWidth={2.5} />
+                <MinusIcon size={8} strokeWidth={2.5} />
               </TrafficLight>
               <TrafficLight $color="maximize" $active={isActive}>
-                <Maximize2 size={6} strokeWidth={2.5} />
+                <Maximize2Icon size={6} strokeWidth={2.5} />
               </TrafficLight>
             </TrafficLights>
             <Title>{title}</Title>
@@ -322,13 +322,13 @@ const SystemMonitor: React.FC<SystemMonitorProps> = ({
               $active={activeTab === 'skills'}
               onClick={() => setActiveTab('skills')}
             >
-              <Cpu size={16} /> Skills
+              <CpuIcon size={16} /> Skills
             </TabButton>
             <TabButton 
               $active={activeTab === 'apis'}
               onClick={() => setActiveTab('apis')}
             >
-              <Wifi size={16} /> API Monitor
+              <WifiIcon size={16} /> API Monitor
             </TabButton>
           </Toolbar>
           
@@ -337,7 +337,7 @@ const SystemMonitor: React.FC<SystemMonitorProps> = ({
               <>
                 <StatusGrid>
                   <StatusCard $color="rgba(0, 122, 255, 0.2)">
-                    <div className="icon"><Cpu size={18} /></div>
+                    <div className="icon"><CpuIcon size={18} /></div>
                     <div className="label">CPU Usage</div>
                     <div className="value">{stats.cpu.toFixed(0)}%</div>
                   </StatusCard>
@@ -347,7 +347,7 @@ const SystemMonitor: React.FC<SystemMonitorProps> = ({
                     <div className="value">{stats.memory.toFixed(1)} GB</div>
                   </StatusCard>
                   <StatusCard $color="rgba(191, 90, 242, 0.2)">
-                    <div className="icon"><Wifi size={18} /></div>
+                    <div className="icon"><WifiIcon size={18} /></div>
                     <div className="label">Network</div>
                     <div className="value">{stats.network}</div>
                   </StatusCard>

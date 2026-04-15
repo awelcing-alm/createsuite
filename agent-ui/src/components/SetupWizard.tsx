@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { macosTheme } from '../theme/macos';
-import { 
-  Key, 
+import {
+  Key,
   CheckCircle,
   XCircle,
   ArrowRight,
@@ -10,9 +10,9 @@ import {
   AlertTriangle,
   Sparkles,
   Settings,
-  Play,
-  ExternalLink
-} from 'lucide-react';
+  PlayIcon,
+  ExternalLink,
+} from '../ui/InlineIcon';
 
 // ==================== TYPES ====================
 
@@ -883,7 +883,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete, onSkip }) => {
     return (
       <StepContent>
         <Title>
-          <Play size={26} color="#34c759" />
+          <PlayIcon size={26} color="#34c759" />
           Ready to Launch!
         </Title>
         <Subtitle>

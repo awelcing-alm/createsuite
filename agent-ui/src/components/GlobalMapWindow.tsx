@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import Draggable from 'react-draggable';
 import { macosTheme } from '../theme/macos';
-import { X, Minus, Maximize2, Users, MessageSquare, Activity, Wifi } from 'lucide-react';
+import { XIcon, MinusIcon, Maximize2Icon, Users, MessageSquare, Activity, WifiIcon } from '../ui/InlineIcon';
 
 export interface GlobalMapAgent {
   id: string;
@@ -479,17 +479,17 @@ const GlobalMapWindow: React.FC<GlobalMapWindowProps> = ({
                 $active={isActive}
                 onClick={(e) => { e.stopPropagation(); onClose(id); }}
               >
-                <X size={8} strokeWidth={2.5} />
+                <XIcon size={8} strokeWidth={2.5} />
               </TrafficLight>
               <TrafficLight $color="minimize" $active={isActive}>
-                <Minus size={8} strokeWidth={2.5} />
+                <MinusIcon size={8} strokeWidth={2.5} />
               </TrafficLight>
               <TrafficLight $color="maximize" $active={isActive}>
-                <Maximize2 size={6} strokeWidth={2.5} />
+                <Maximize2Icon size={6} strokeWidth={2.5} />
               </TrafficLight>
             </TrafficLights>
             <Title>
-              <Wifi size={14} />
+              <WifiIcon size={14} />
               {title}
             </Title>
             <div style={{ width: 52 }} />

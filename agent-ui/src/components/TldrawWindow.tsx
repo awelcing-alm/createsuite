@@ -2,7 +2,7 @@ import React, { useRef, useState, Suspense } from 'react';
 import styled, { keyframes } from 'styled-components';
 import Draggable from 'react-draggable';
 import { macosTheme } from '../theme/macos';
-import { X, Minus, Maximize2, Pencil } from 'lucide-react';
+import { XIcon, MinusIcon, Maximize2Icon, Pencil } from '../ui/InlineIcon';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: scale(0.95); }
@@ -241,7 +241,7 @@ const TldrawWindow: React.FC<TldrawWindowProps> = ({
                   onClose(id);
                 }}
               >
-                <X size={8} strokeWidth={2.5} />
+                <XIcon size={8} strokeWidth={2.5} />
               </TrafficLight>
               <TrafficLight
                 $color="minimize"
@@ -251,7 +251,7 @@ const TldrawWindow: React.FC<TldrawWindowProps> = ({
                   onMinimize?.();
                 }}
               >
-                <Minus size={8} strokeWidth={2.5} />
+                <MinusIcon size={8} strokeWidth={2.5} />
               </TrafficLight>
               <TrafficLight
                 $color="maximize"
@@ -261,7 +261,7 @@ const TldrawWindow: React.FC<TldrawWindowProps> = ({
                   onMaximize?.();
                 }}
               >
-                <Maximize2 size={6} strokeWidth={2.5} />
+                <Maximize2Icon size={6} strokeWidth={2.5} />
               </TrafficLight>
             </TrafficLights>
             <Title>

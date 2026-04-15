@@ -5,7 +5,7 @@ import 'tldraw/tldraw.css';
 import styled, { keyframes } from 'styled-components';
 import Draggable from 'react-draggable';
 import { macosTheme } from '../theme/macos';
-import { Users, X, Minus, Maximize2 } from 'lucide-react';
+import { Users, XIcon, MinusIcon, Maximize2Icon } from '../ui/InlineIcon';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: scale(0.95); }
@@ -268,21 +268,21 @@ const QuadBoardWindow: React.FC<QuadBoardWindowProps> = ({
                 $active={isActive}
                 onClick={(e) => { e.stopPropagation(); onClose(id); }}
               >
-                <X size={8} strokeWidth={2.5} />
+                <XIcon size={8} strokeWidth={2.5} />
               </TrafficLight>
               <TrafficLight 
                 $color="minimize" 
                 $active={isActive}
                 onClick={(e) => { e.stopPropagation(); onMinimize?.(); }}
               >
-                <Minus size={8} strokeWidth={2.5} />
+                <MinusIcon size={8} strokeWidth={2.5} />
               </TrafficLight>
               <TrafficLight 
                 $color="maximize" 
                 $active={isActive}
                 onClick={(e) => { e.stopPropagation(); onMaximize?.(); }}
               >
-                <Maximize2 size={6} strokeWidth={2.5} />
+                <Maximize2Icon size={6} strokeWidth={2.5} />
               </TrafficLight>
             </TrafficLights>
             <Title>

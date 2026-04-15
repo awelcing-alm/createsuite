@@ -2,20 +2,20 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { io, Socket } from 'socket.io-client';
 import { macosTheme } from '../theme/macos';
-import { 
-  Clock, 
-  Power, 
-  Hammer, 
-  Pause, 
-  Play,
+import {
+  Clock,
+  Power,
+  Hammer,
+  Pause,
+  PlayIcon,
   AlertTriangle,
   CheckCircle,
   XCircle,
   Zap,
   Server,
-  X,
-  Minus
-} from 'lucide-react';
+  XIcon,
+  MinusIcon,
+} from '../ui/InlineIcon';
 
 // ==================== TYPES ====================
 
@@ -646,10 +646,10 @@ const LifecycleNotification: React.FC<LifecycleNotificationProps> = ({
         <TitleBar>
           <TrafficLights>
             <TrafficLight $color="close" onClick={handleClose}>
-              <X size={8} strokeWidth={2.5} />
+              <XIcon size={8} strokeWidth={2.5} />
             </TrafficLight>
             <TrafficLight $color="minimize" onClick={handleClose}>
-              <Minus size={8} strokeWidth={2.5} />
+              <MinusIcon size={8} strokeWidth={2.5} />
             </TrafficLight>
           </TrafficLights>
           <TitleText>
@@ -682,7 +682,7 @@ const LifecycleNotification: React.FC<LifecycleNotificationProps> = ({
               
               <ButtonRow>
                 <Button $primary onClick={handleKeepWorking}>
-                  <Play size={14} />
+                  <PlayIcon size={14} />
                   Keep Working (+15 min)
                 </Button>
                 <Button onClick={() => handleHold(60)}>
@@ -730,7 +730,7 @@ const LifecycleNotification: React.FC<LifecycleNotificationProps> = ({
                 <Button $primary onClick={async () => {
                   await fetch('/api/lifecycle/release', { method: 'POST' });
                 }}>
-                  <Play size={14} />
+                  <PlayIcon size={14} />
                   Release Hold
                 </Button>
               </ButtonRow>
