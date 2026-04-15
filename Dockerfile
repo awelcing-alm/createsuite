@@ -22,11 +22,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# --- 3. Rust Toolchain (for NIFs; keep but don't compile heavy tools from source) ---
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
-
-# --- 4. Modern CLI Replacements (pre-built binaries for speed) ---
+# --- 3. Modern CLI Replacements (pre-built binaries; no Rust toolchain needed) ---
 RUN \
     # eza
     EZA_VERSION=$(curl -sL https://api.github.com/repos/eza-community/eza/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/') && \
@@ -40,11 +36,11 @@ RUN \
     # starship
     curl -fsSL https://starship.rs/install.sh | sh -s -- -y -b /usr/local/bin
 
-# --- 5. Ghostty Terminfo (For the ultimate terminal experience) ---
+# --- 4. Ghostty Terminfo (For the ultimate terminal experience) ---
 RUN mkdir -p /usr/share/terminfo/x && \
     curl -fsSL https://raw.githubusercontent.com/sneethe/terminfo/master/78/xterm-ghostty -o /usr/share/terminfo/x/xterm-ghostty
 
-# --- 6. GitHub CLI ---
+# --- 5. GitHub CLI ---
 RUN type -p curl >/dev/null || (apt-get update && apt-get install curl -y) \
     && mkdir -p -m 755 /etc/apt/keyrings \
     && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
@@ -54,11 +50,11 @@ RUN type -p curl >/dev/null || (apt-get update && apt-get install curl -y) \
     && apt-get install -y --no-install-recommends gh \
     && rm -rf /var/lib/apt/lists/*
 
-# --- 7. OpenCode & CreateSuite Runtime ---
+# --- 6. OpenCode & CreateSuite Runtime ---
 RUN curl -fsSL https://opencode.ai/install | bash
 ENV PATH="/root/.opencode/bin:${PATH}"
 
-# --- 8. Zsh Setup (Oh My Zsh + Customizations) ---
+# --- 7. Zsh Setup (Oh My Zsh + Customizations) ---
 # Shallow clone for much faster image builds
 RUN git clone --depth 1 https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh && \
     cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
@@ -125,19 +121,19 @@ printf "\e[2m%s\e[0m\n\n" "startup telemetry: stable | prompt diagnostics: clear
 EOF
 RUN chmod +x /usr/local/bin/createsuite-startup-art
 
-# --- 9. Portless proxy (required by dev.sh) ---
+# --- 8. Portless proxy (required by dev.sh) ---
 RUN npm install -g portless
 
-# --- 10. PostgreSQL Setup ---
+# --- 9. PostgreSQL Setup ---
 # Configure for local development (trust auth, listen on all interfaces)
 RUN sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/*/main/postgresql.conf \
     && echo "host all all 0.0.0.0/0 trust" >> /etc/postgresql/*/main/pg_hba.conf
 
-# --- 11. Elixir/Mix Optimization ---
+# --- 10. Elixir/Mix Optimization ---
 RUN mix local.hex --force && \
     mix local.rebar --force
 
-# --- 12. Environment Tuning ---
+# --- 11. Environment Tuning ---
 WORKDIR /workspaces/createsuite
 ENV NODE_ENV=development
 ENV MIX_ENV=dev
