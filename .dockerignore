@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+agent-ui/node_modules/
+agent-ui/server/node_modules/
+backend/myapp/deps/
+
+# Git
+.git/
+.gitignore
+
+# Build outputs
+dist/
+agent-ui/dist/
+backend/myapp/_build/
+backend/myapp/priv/static/assets/
+*.tsbuildinfo
+
+# CreateSuite runtime state
+.createsuite/
+.sisyphus/
+
+# Test artifacts
+test-results/
+agent-ui/test-results/
+coverage/
+.playwright-mcp/
+
+# Documentation (not needed for container build)
+*.md
+docs/
+
+# Media and generated assets
+public/*.mp4
+remotion/out/
+cacti-*.png
+*.ply
+
+# IDE/OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Misc
+.dockerignore
+fly.toml
