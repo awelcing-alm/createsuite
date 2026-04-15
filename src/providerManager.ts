@@ -100,22 +100,6 @@ export class ProviderManager {
   }
 
   /**
-   * Check if oh-my-opencode is configured
-   */
-  async isOhMyOpencodeConfigured(): Promise<boolean> {
-    if (!fs.existsSync(this.opencodeConfigPath)) {
-      return false;
-    }
-
-    try {
-      const config = JSON.parse(fs.readFileSync(this.opencodeConfigPath, 'utf-8'));
-      return config.plugin && config.plugin.includes('oh-my-opencode');
-    } catch {
-      return false;
-    }
-  }
-
-  /**
    * Interactive provider setup wizard
    */
   async setupProviders(): Promise<void> {
@@ -141,26 +125,6 @@ export class ProviderManager {
       }
     } else {
       console.log(chalk.green('✓ OpenCode is installed'));
-    }
-
-    // Check oh-my-opencode
-    const omoConfigured = await this.isOhMyOpencodeConfigured();
-    if (!omoConfigured) {
-      console.log(chalk.yellow('\n⚠️  oh-my-opencode is not configured.'));
-      const { shouldSetupOmo } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'shouldSetupOmo',
-          message: 'Would you like to set up oh-my-opencode now?',
-          default: true,
-        },
-      ]);
-
-      if (shouldSetupOmo) {
-        await this.setupOhMyOpencode();
-      }
-    } else {
-      console.log(chalk.green('✓ oh-my-opencode is configured'));
     }
 
     // Provider selection
@@ -314,21 +278,6 @@ export class ProviderManager {
       console.log(chalk.gray('\nYou can authenticate later by running:'));
       console.log(chalk.blue('  cs provider auth\n'));
     }
-  }
-
-  /**
-   * Set up oh-my-opencode
-   */
-  async setupOhMyOpencode(): Promise<void> {
-    console.log(chalk.blue('\n📦 Setting up oh-my-opencode...\n'));
-    console.log(chalk.gray('oh-my-opencode provides advanced agent orchestration capabilities.'));
-    console.log(chalk.gray('Learn more: https://github.com/code-yeongyu/oh-my-opencode\n'));
-
-    // The installer will handle everything
-    console.log(chalk.yellow('Run the following command to complete setup:'));
-    console.log(chalk.blue('  bunx oh-my-opencode install\n'));
-    console.log(chalk.gray('or if you prefer npm:'));
-    console.log(chalk.blue('  npx oh-my-opencode install\n'));
   }
 
   /**
@@ -838,7 +787,7 @@ export class ProviderManager {
 
   /**
    * Refresh authentication token for a provider
-   * Note: Actual refresh is delegated to OpenCode's oh-my-opencode plugin
+   * Note: Actual refresh is delegated to OpenCode
    */
   async refreshProviderToken(provider: Provider): Promise<boolean> {
     console.log(chalk.gray(`Token refresh for ${this.getProviderDisplayName(provider)}...`));

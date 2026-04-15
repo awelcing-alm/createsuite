@@ -40,14 +40,14 @@ needs_npm_ci() {
 
 if needs_npm_ci package.json package-lock.json node_modules; then
   echo "📦 Installing root Node dependencies..."
-  npm ci --prefer-offline --no-audit --no-fund --maxsockets=8
+  npm ci
 else
   echo "⏭️  Root node_modules up to date"
 fi
 
 if needs_npm_ci agent-ui/package.json agent-ui/package-lock.json agent-ui/node_modules; then
   echo "📦 Installing agent-ui Node dependencies..."
-  (cd agent-ui && npm ci --prefer-offline --no-audit --no-fund --maxsockets=8)
+  (cd agent-ui && npm ci)
 else
   echo "⏭️  agent-ui node_modules up to date"
 fi

@@ -60,7 +60,7 @@ program
     if (!options.skipProviders) {
       console.log(chalk.bold.cyan("\n🚀 Let's set up your AI model providers!\n"));
       console.log(
-        chalk.gray('CreateSuite uses OpenCode and oh-my-opencode for advanced agent orchestration.')
+        chalk.gray('CreateSuite uses OpenCode for advanced agent orchestration.')
       );
       console.log(
         chalk.gray('This will configure connections to Z.ai, Claude, OpenAI, MiniMax, and more.\n')

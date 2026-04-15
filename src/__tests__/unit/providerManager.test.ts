@@ -125,48 +125,4 @@ describe('ProviderManager', () => {
     });
   });
 
-  describe('isOhMyOpencodeConfigured', () => {
-    test('returns false if config not found', async () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-
-      const manager = new ProviderManager('/tmp/test-workspace');
-      const result = await manager.isOhMyOpencodeConfigured();
-
-      expect(result).toBe(false);
-    });
-
-    test('returns false if plugin not configured', async () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify({ plugin: [] }));
-
-      const manager = new ProviderManager('/tmp/test-workspace');
-      const result = await manager.isOhMyOpencodeConfigured();
-
-      expect(result).toBe(false);
-    });
-
-    test('returns true if oh-my-opencode plugin found', async () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(
-        JSON.stringify({
-          plugin: ['oh-my-opencode', 'other-plugin'],
-        })
-      );
-
-      const manager = new ProviderManager('/tmp/test-workspace');
-      const result = await manager.isOhMyOpencodeConfigured();
-
-      expect(result).toBe(true);
-    });
-
-    test('returns false on parse error', async () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue('invalid json');
-
-      const manager = new ProviderManager('/tmp/test-workspace');
-      const result = await manager.isOhMyOpencodeConfigured();
-
-      expect(result).toBe(false);
-    });
-  });
 });

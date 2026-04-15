@@ -11,18 +11,16 @@ ENV SHELL=/bin/zsh
 # --- 1. Core System Power & Build Tools ---
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl gnupg2 ca-certificates git build-essential \
-    python3 python3-pip make g++ sudo locales \
+    python3 make g++ locales \
     libncurses5-dev libncursesw5-dev libssl-dev \
     inotify-tools jq ripgrep fd-find fzf htop \
     unzip zip vim-tiny zsh postgresql postgresql-contrib lsof \
     && rm -rf /var/lib/apt/lists/*
 
-# --- 2. Node.js (22.x) & Bun ---
+# --- 2. Node.js (22.x) ---
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
-    && curl -fsSL https://bun.sh/install | bash \
     && rm -rf /var/lib/apt/lists/*
-ENV PATH="/root/.bun/bin:${PATH}"
 
 # --- 3. Rust Toolchain (for NIFs; keep but don't compile heavy tools from source) ---
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
