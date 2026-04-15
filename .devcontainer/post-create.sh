@@ -52,6 +52,13 @@ else
   echo "⏭️  agent-ui node_modules up to date"
 fi
 
+if needs_npm_ci agent-ui/server/package.json agent-ui/server/package-lock.json agent-ui/server/node_modules; then
+  echo "📦 Installing agent-ui server Node dependencies..."
+  (cd agent-ui/server && npm ci)
+else
+  echo "⏭️  agent-ui server node_modules up to date"
+fi
+
 # --- Build ---
 echo "🔨 Building project..."
 npm run build
